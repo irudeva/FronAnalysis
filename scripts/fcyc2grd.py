@@ -69,6 +69,7 @@ dt0 = datetime.datetime(1900, 1, 1, 0)
 max_nf      =  250     # max number of tracks per year
 max_npts    =  200      # max number of points per front
 min_flength =  500      # min front length
+inf_npts    =  2        #number of points to inflate fronts to the west
 
 # creat arrays for recording tracks
 #trklen  = np.empty(max_ntrk,np.int16); trklen.fill(0)
@@ -83,7 +84,7 @@ min_flength =  500      # min front length
 
 
 
-for yr in range(1980,2017):
+for yr in range(2015,2016):
     #create time variable
     dt_nc = [ datetime.datetime(yr-1, 11, 1, 0)+i*timedelta(hours=6) for i in range(1764)]
     if calendar.isleap(yr):
@@ -95,42 +96,32 @@ for yr in range(1980,2017):
         dt_hours[it] = divmod(tdelta.total_seconds(),3600)[0]
 
 
-    #grid for cyclone records
+    #grid for front records
+    nf_dt  = np.empty(len(dt_nc),np.int16); nf_dt.fill(0)  # number of fronts per time step
     frgrd = np.empty([len(lons),len(lats),len(dt_nc)],np.int16); frgrd.fill(0)
+    inffrgrd = np.copy(frgrd)
     # cycgrd_rad  = np.copy(frgrd)    #for radius from cyc tracking
-    dvgrd  = np.copy(frgrd)
-    nf_dt  = p.empty(len(dt_nc),np.int16); frgrd.fill(0)
+    dvgrd  = np.copy(frgrd,np.float)
+
+    cglon  = np.zeros([len(dt_nc),max_nf])
+    cglat  = np.zeros_like(cglon)
+    clen  = np.zeros_like(cglon)
+    npts  = np.zeros_like(cglon,dtype = np.int16)
+
+    klon = np.zeros([len(dt_nc),max_nf,max_npts])
+    klat = np.zeros_like(klon)
+    kdv  = np.zeros_like(klon)
 
 
-    #read trk
+    #read front
     for ihs in hs :
         fin = "../../FrontTRK/output/erain/10/fcyc2trk10.%s.%d.%s.dat"%(dset,yr,ihs)
         print "fronts from =",fin
         print "Reading fronts:"
 
-
-
-        print 'fcyc reading:'
-
-        # npnt  = np.zeros(max_ntrk,dtype = np.int16)
-        # clon  = np.zeros([max_ntrk,max_trklength])
-        # clat  = np.zeros_like(clon)
-        # cslp = np.zeros_like(clon)
-        # crad = np.zeros_like(clon)
-        # cdp  = np.zeros_like(clon)
-        # clpl = np.zeros_like(clon)
-        # date = np.zeros_like(clon,dtype = np.int)
-        # ntime  = np.zeros_like(date)
-        # ctime  = np.empty_like(date); ctime.fill(-1)
-        # cyr    = np.empty_like(date); cyr.fill(-1)
-        # cmon   = np.empty_like(date); cmon.fill(-1)
-        # cdate  = np.empty_like(date); cdate.fill(-1)
-        # chour  = np.empty_like(date); chour.fill(-1)
-        # ciop   = np.zeros_like(date)  #open/close marker
-        #
         f = open(fin, 'r')
 
-        for ind,t in enumerate(dt_nc) :
+        for tind,t in enumerate(dt_nc) :
         # for line in range(1,max_ntrk):
             emptyline = f.readline()
             header    = f.readline()
@@ -157,7 +148,6 @@ for yr in range(1980,2017):
             cm  = int(cdate[2:4])
             cd  = int(cdate[4:6])
             chr = int(columns[2][:2])
-            print cyr, cm, cd, chr, columns[2][:2]
             if cyr < 30:
                 cyr = cyr + 2000
             else:
@@ -171,396 +161,256 @@ for yr in range(1980,2017):
                 quit()
 
             # N of fronts
-            nf = float(columns[6])
+            cnf = int(columns[6])
 
+            # done to here!
+            nf_dt[tind] = nf_dt[tind]+cnf   #combined number of fronts (for two henispheres)
+            nf = nf_dt[tind]
             if nf > max_nf :
                 print " ERROR!!! Number of fronts is more than max_nf: nf = %d, max_nf = %d" %(nf,max_nf)
                 print "          time = ", t
                 quit()
 
-
-            # done to here!
-            npnt[ntrk-1]=nit
-            for n in range(0,nf):
+            for ifr in range(nf-cnf,nf):
+                # print "t: %s ifr=%d / %d" % (t,ifr+1,nf)
                 l = f.readline()
                 columns = l.split()
-                ciop[ntrk-1,n]=float(columns[5])
-                clon[ntrk-1,n]=float(columns[7])
-                clat[ntrk-1,n]=float(columns[8])
-                cslp[ntrk-1,n]=float(columns[9])
-                clpl[ntrk-1,n]=float(columns[10])
-                cdp [ntrk-1,n]=float(columns[11])
-                crad[ntrk-1,n]=float(columns[12])
-                date[ntrk-1,n]=columns[1]
-                ntime[ntrk-1,n]=columns[2]
+                if int(columns[0])-1  != ifr-(nf-cnf) :
+                    print "ERROR: Check the front number"
+                    print "       ifr = ",int(columns[0]), ", current number = ", ifr-(nf-cnf)+1
+                    print "       time: ", t
+                    quit()
+                cglon[tind,ifr] = float(columns[2])
+                cglat[tind,ifr] = float(columns[3])
+                clen[tind,ifr]  = float(columns[4])
+                npts[tind,ifr]  = float(columns[7])
 
-                # for ind,year in enumerate(np.arange(yr-1,yr+1)):
-                #     if str(year) == str(date[ntrk-1,n])[0:4]:
-                #         iyr[ntrk-1,n] = ind
-                # if iyr[ntrk-1,n] == -1:
-                #     print "!!!! Check years in trk file"
-                #     quit()
-                cyr[ntrk-1,n]    = int(str(date[ntrk-1,n])[0:4])
-                # to process the current year only
-                # if cyr[ntrk-1,n] != yr:
-                #     continue
-                cmon[ntrk-1,n]   = int(str(date[ntrk-1,n])[4:6])
-                cdate[ntrk-1,n]  = int(str(date[ntrk-1,n])[6:8])
-                chour[ntrk-1,n]  = int(str(ntime[ntrk-1,n]/100))
-                for ind,t in enumerate(dt_nc) :
-                    if t == datetime.datetime(cyr[ntrk-1,n],cmon[ntrk-1,n],cdate[ntrk-1,n],chour[ntrk-1,n]):
-                        ctime[ntrk-1,n] = ind
-                        break
-                if ctime[ntrk-1,n] == -1:
-                    print "!!!! Check the time in trk file"
+                if npts[tind,ifr] > max_npts:
+                    print "ERROR: the front %d is too long" % ifr
+                    print "       t: ",t
                     quit()
 
+                for k in range(npts[tind,ifr]) :
+                    iline    = f.readline()
+                    columns = iline.split()
+
+                    klon[tind,ifr,k] = float(columns[4])
+                    klat[tind,ifr,k] = float(columns[3])
+                    kdv[tind,ifr,k]  = float(columns[5])
+
+
                 ####################################################
-                # cyclones onto grid
+                # fornts onto grid
 
                 #find the closest grid value to the cyclone center
                 # clon[ntrk-1,n] = 1 # test
                 # clat[ntrk-1,n] = 55.  #test!
+                if clen[tind,ifr] >= min_flength :
 
-                if ird == 1:
-                    cycrad = crad[ntrk-1,n]*deg
+                    for k in range(npts[tind,ifr]) :
 
-                if clon[ntrk-1,n] < 0:
-                     clon[ntrk-1,n]=clon[ntrk-1,n]+360
-                ilon = find_nearest(lons,clon[ntrk-1,n])
-                ilat = find_nearest(lats,clat[ntrk-1,n])
+                        if klon[tind,ifr,k] < 0:
+                            klon[tind,ifr,k] = klon[tind,ifr,k]+360
+                        ilon = find_nearest(lons,klon[tind,ifr,k])
+                        ilat = find_nearest(lats,klat[tind,ifr,k])
 
-                frgrd[ilon,ilat,ctime[ntrk-1,n]] = ntrk*10
-                # cycgrd_rad[ilon,ilat,ctime[ntrk-1,n]] = ntrk*10
-                cycgrd_cen[ilon,ilat,ctime[ntrk-1,n]]  = ntrk
+                        # if abs(lats[ilat]) == 90:
+                        #      frgrd[:,ilat,tind] = ifr+1
+                        #      dvgrd[:,ilat,tind]  = kdv[tind,ifr,k]
+                        #      print "WARNING: A front detected at the pole "
+                        #      print "         t ", t," ifr = %d" % ifr
+                        #      quit()
+                        # else :
 
+                        frgrd[ilon,ilat,tind] = ifr-(nf-cnf)+1   #ifr+1
+                        dvgrd[ilon,ilat,tind]  = kdv[tind,ifr,k]
 
-                #check if cyclone area is close to poles
-                if clat[ntrk-1,n] >= 0 :
-                    cdist_pole = (90 - clat[ntrk-1,n])*deg
-                else :
-                    cdist_pole = (90 + clat[ntrk-1,n])*deg
-
-                # print 'cyclone at ', ilat,ilon
-                # print 'dist_pole', cdist_pole
-
-                for nlat in np.arange(ilat,ilat+10) :
-                    if nlat <= len(lats)-1 :
-                        # cdist = dist(lats[nlat],lons[ilon],clat[ntrk-1,n],clon[ntrk-1,n])
-                        cdist1 = np.absolute(lats[nlat] - clat[ntrk-1,n])*deg
-                            # print 'nlat=',nlat
-                        if cdist1 <= cycrad :
-                            for nlon in np.arange(ilon,ilon+len(lons)-1) :
-                                if nlat == ilat and nlon == ilon:
-                                    continue
-                                nnlon = nlon
-                                if nlon >= len(lons):
-                                    nnlon = nlon - len(lons)
-                                    # print lons[nnlon]
-                                # print 'nnlon=',nnlon
-                                # print " // ++ ", nlat,nnlon
-                                cdist = dist(lats[nlat],lons[nnlon],clat[ntrk-1,n],clon[ntrk-1,n])
-                                # print cdist,cycrad
-                                if cdist <= cycrad :
-                                    # print " ++ ", nlat, nnlon
-                                    frgrd[nnlon,nlat,ctime[ntrk-1,n]] = frgrd[nnlon,nlat,ctime[ntrk-1,n]] + 1
-                                else :
-                                    if cdist_pole > cycrad:
-                                        break
-                            if cdist_pole > cycrad :
-                                for nlon in np.arange(ilon-1,ilon-len(lons)+1,-1) :
-                                    nnlon = nlon
-                                    # cdist = dist(lats[nlat],lons[nnlon],clat[ntrk-1,n],clon[ntrk-1,n])
-                                    cdist = dist(lats[nlat],lons[nnlon],lats[ilat],lons[ilon])
-                                    if cdist <= cycrad :
-                                        # print " +- ", nlat, nnlon
-                                        frgrd[nnlon,nlat,ctime[ntrk-1,n]] = frgrd[nnlon,nlat,ctime[ntrk-1,n]] + 1
-                                    else :
-                                        break
-                        else :
-                            # print "dist along longitude > cycdist => no need to check 1 "
-                            break #dist along longitude > cycdist => no need to check
-                    else :
-                        # print "out of bounds"
-                        break #out of bounds
-
-                for nlat in np.arange(ilat-1,ilat-10,-1) :
-                    if nlat >= 0:
-                        # cdist = dist(lats[nlat],lons[ilon],clat[ntrk-1,n],clon[ntrk-1,n])
-                        # cdist1 = dist(lats[nlat],lons[ilon],lats[ilat],lons[ilon])
-                        # cdist1 = np.absolute(lats[nlat] - clat[ntrk-1,n])*deg
-                        cdist1 = np.absolute(lats[nlat] - lats[ilat])*deg
-                        if cdist1 <= cycrad :
-                            for nlon in np.arange(ilon,ilon+len(lons)-1) :
-                                nnlon = nlon
-                                if nlon >= len(lons):
-                                    nnlon = nlon - len(lons)
-                                # print " // -+ ", nlat,nnlon
-                                cdist = dist(lats[nlat],lons[nnlon],clat[ntrk-1,n],clon[ntrk-1,n])
-                                if cdist <= cycrad :
-                                    # print " -+ ", nlat, nnlon
-                                    frgrd[nnlon,nlat,ctime[ntrk-1,n]] = frgrd[nnlon,nlat,ctime[ntrk-1,n]] + 1
-                                else :
-                                    if cdist_pole > cycrad:
-                                        break
-                            if cdist_pole > cycrad :
-                                for nlon in np.arange(ilon-1,ilon-len(lons)+1,-1) :
-                                    nnlon = nlon
-                                    # print " // -- ", nlat,nnlon
-                                    cdist = dist(lats[nlat],lons[nnlon],clat[ntrk-1,n],clon[ntrk-1,n])
-                                    if cdist <= cycrad :
-                                        # print " -- ", nlat, nnlon
-                                        frgrd[nnlon,nlat,ctime[ntrk-1,n]] = frgrd[nnlon,nlat,ctime[ntrk-1,n]] + 1
-                                    else :
-                                        break
-                        else :
-                            # print "dist along longitude > cycdist => no need to check 2"
-                            break #dist along longitude > cycdist => no need to check
-                    else :
-                        # print "out of bounds"
-                        break #out of bounds
-
-                # break #test - first point of the first cyclone onto the grid
-
-            ####################################################
-            # record tracks
-
-            trklen[ntrk-1] = nit; print "trklen =", trklen[ntrk-1]," ntrk = ", ntrk
-            trklon [ntrk-1,:nit]  = clon[ntrk-1,:nit]
-            trklat [ntrk-1,:nit]  = clat[ntrk-1,:nit]
-            trktime[ntrk-1,:nit]  = dt_hours[ctime[ntrk-1,:nit]]
-            trkslp [ntrk-1,:nit]  = cslp[ntrk-1,:nit]
-            trkrd  [ntrk-1,:nit]  = crad[ntrk-1,:nit]
-            trkdp  [ntrk-1,:nit]  = cdp [ntrk-1,:nit]
-            trklpl [ntrk-1,:nit]  = clpl[ntrk-1,:nit]
-            trkiop [ntrk-1,:nit]  = ciop[ntrk-1,:nit]
+                        # inflation
+                        if inf_npts == 2 :
+                            if ilon > 1 :
+                                inffrgrd[ilon-2:ilon+1,ilat,tind] = ifr+1
+                            elif ilon > 0 :
+                                inffrgrd[ilon-1:ilon+1,ilat,tind] = ifr+1
+                                inffrgrd[-1,ilat,tind] = ifr+1
+                            elif ilon == 0 :
+                                inffrgrd[-2:,ilat,tind] = ifr+1
+                                # print "inf: ",inffrgrd[-2:,ilat,tind]
+                        else:
+                            print "ERROR: Check the number of points to inflate fronts"
 
 
-            # break  #test - first cyclone onto the grid
-        # print cyr[ntrk-1,n],cmon[ntrk-1,n],cdate[ntrk-1,n],chour[ntrk-1,n], n, ntrk
-        # quit()
-        #
-        # break #test - first cyclone onto the grid
-
-
+            # break   #for the first time step only
         f.close()
         print 'fin closed'
 
     #---Cyclone number to NetCDF write---------------------------------------------------------------
     print("Start NetCDF writing")
 
-    # varlist = np.zeros(16, dtype = {'names': ['name', 'outname', 'data', 'scale'],
-    #                                 'formats': ['a5', 'a5', '(241,480)f4', 'f4']} )
-    #
-    #
-    # varlist[0] = ("u","u",u,1)
-    # varlist[1] = ("v","v",v,1)
-    # for iv in range(varlist['name'].size) :
 
 
     # ncvar = "cycnum"
     # print 'ncvar=',ncvar
-    fcyc = '../ERAint/trkgrid/cycloc_rd.%d.nc' % (yr)
-    nccyc = Dataset(fcyc, 'w', format='NETCDF4')
-    nccyc.description = "Cyclone centers from  %s. Cyclone center number corresponds \
-                         to the tracking number in the source file." % (fin)
+    frfile = '../frontgrd/frgrd.%d.nc' % (yr)
+    print "    write to %s " % frfile
+    ncfr = Dataset(frfile, 'w', format='NETCDF4')
+    ncfr.description = "Front lines from  %s. Min front length is %d " % (fin,min_flength)
 
-    dimnam=('lon','lat','time')
-    varnam=['longitude','latitude','time','cycloc','cycarea']
+    dimnam=('lon','lat','time','nf')
+    varnam=['longitude','latitude','time','nf','fronts','wfronts',"dv"]
 
     #dimensions
-    nccyc.createDimension(dimnam[0], lons.size)
-    nccyc.createDimension(dimnam[1], lats.size)
-    nccyc.createDimension(dimnam[2], None)
+    ncfr.createDimension(dimnam[0], lons.size)
+    ncfr.createDimension(dimnam[1], lats.size)
+    ncfr.createDimension(dimnam[2], None)
+    ncfr.createDimension(dimnam[3], len(dt_nc))
 
 
     #variables
     # for nv in range(0, 3) :
-    #     # nccyc_var = nccyc.createVariable(varnam[nv], nc.variables[varnam[nv]].dtype,dimnam[nv])
-    #     nccyc_var = nccyc.createVariable(varnam[nv], 'f',dimnam[nv])
+    #     # ncfr_var = ncfr.createVariable(varnam[nv], nc.variables[varnam[nv]].dtype,dimnam[nv])
+    #     ncfr_var = ncfr.createVariable(varnam[nv], 'f',dimnam[nv])
         # for ncattr in nc.variables[varnam[nv]].ncattrs():
-            # nccyc_var.setncattr(ncattr, nc.variables[varnam[nv]].getncattr(ncattr))
+            # ncfr_var.setncattr(ncattr, nc.variables[varnam[nv]].getncattr(ncattr))
     #print(nc.variables['latitude'].ncattrs())
 
     #create  variables
      #lons
     nv=0
-    nccyc_var = nccyc.createVariable(varnam[nv], 'f',dimnam[nv])
+    ncfr_var = ncfr.createVariable(varnam[nv], 'f',dimnam[nv])
     if varnam[nv] == 'longitude' :
-        nccyc_var.long_name = varnam[nv]
-        nccyc_var.units = 'degrees_east'
-        nccyc.variables[varnam[nv]][:] = lons
+        ncfr_var.long_name = varnam[nv]
+        ncfr_var.units = 'degrees_east'
+        ncfr.variables[varnam[nv]][:] = lons
 
      #lats
     nv=1
-    nccyc_var = nccyc.createVariable(varnam[nv], 'f',dimnam[nv])
+    ncfr_var = ncfr.createVariable(varnam[nv], 'f',dimnam[nv])
     if varnam[nv] == 'latitude' :
-        nccyc_var.long_name = varnam[nv]
-        nccyc_var.units = 'degrees_north'
-        nccyc.variables[varnam[nv]][:] = lats
+        ncfr_var.long_name = varnam[nv]
+        ncfr_var.units = 'degrees_north'
+        ncfr.variables[varnam[nv]][:] = lats
 
      #time
     nv=2
-    nccyc_var = nccyc.createVariable(varnam[nv], 'f',dimnam[nv])
-    nccyc_var.long_name = varnam[nv]
+    ncfr_var = ncfr.createVariable(varnam[nv], 'f',dimnam[nv])
+    ncfr_var.long_name = varnam[nv]
     if varnam[nv] == 'time' :
-        nccyc_var.calendar = 'gregorian'
-        # nccyc_var.units = 'hours since 1900-01-01 00:00:0.0'
-        nccyc_var.units = time0
+        ncfr_var.calendar = 'gregorian'
+        # ncfr_var.units = 'hours since 1900-01-01 00:00:0.0'
+        ncfr_var.units = time0
         #for one time step - test!
         # tdelta =  datetime.datetime(cyr[ntrk-1,n],cmon[ntrk-1,n],cdate[ntrk-1,n],chour[ntrk-1,n]) - datetime.datetime(1900, 1, 1, 0)
-        # nccyc.variables[varnam[nv]][:] = divmod(tdelta.total_seconds(),3600)[0]
-        nccyc.variables[varnam[nv]][:] = dt_hours
+        # ncfr.variables[varnam[nv]][:] = divmod(tdelta.total_seconds(),3600)[0]
+        ncfr.variables[varnam[nv]][:] = dt_hours
+
+    ncfr_var = ncfr.createVariable('nfr', 'i2',dimnam[2])
+    ncfr_var.long_name = 'number of fronts per timestep'
+    ncfr_var[:]    = nf_dt
 
 
-    #cyclone centers to netcdf
+    #front to netcdf
     nv = 3
-    nccyc_var = nccyc.createVariable(varnam[nv], 'f',dimnam[::-1])
-    # print nccyc_var.shape
-    nccyc_var.long_name = 'location of cyclone centers'
-    # nccyc_var.scale_factor = varlist["scale"][iv]
-    # nccyc_var.add_offset   = 0.
-    # nccyc_var.units        = 'scale   %s' % varlist["scale"][iv]
+    ncfr_var = ncfr.createVariable(varnam[nv], 'f',dimnam[2])
+    # print ncfr_var.shape
+    ncfr_var.long_name = 'number of fronts'
+    # ncfr_var.scale_factor = varlist["scale"][iv]
+    # ncfr_var.add_offset   = 0.
+    # ncfr_var.units        = 'scale   %s' % varlist["scale"][iv]
+
+    ncfr_var[:] = nf_dt
+
+
+    nv = 4
+    ncfr_var = ncfr.createVariable(varnam[nv], 'f',dimnam[-2::-1])
+    # print ncfr_var.shape
+    ncfr_var.long_name = 'location of fronts'
+    # ncfr_var.scale_factor = varlist["scale"][iv]
+    # ncfr_var.add_offset   = 0.
+    # ncfr_var.units        = 'scale   %s' % varlist["scale"][iv]
 
     #print qx.shape
-    #print nccyc_var.shape
-    # nccyc_var[:,:,:] = np.swapaxes(gridcyc,0,2)
-    nccyc_var[:,:,:] = np.swapaxes(cycgrd_cen[:,:,:],0,2)
+    #print ncfr_var.shape
+    # ncfr_var[:,:,:] = np.swapaxes(gridcyc,0,2)
+    ncfr_var[:,:,:] = np.swapaxes(frgrd[:,:,:],0,2)
 
-    #cyclone area to netcdf
-    nv =4
-    nccyc_var = nccyc.createVariable(varnam[nv], 'f',dimnam[::-1])
-    # print nccyc_var.shape
-    nccyc_var.long_name = 'cyclone area'
-    if ird == 0 :
-        nccyc_var.radius = cycrad
-    elif ird == 1:
-        nccyc_var.radius = "rd from original trk file"
-    # nccyc_var.scale_factor = varlist["scale"][iv]
-    # nccyc_var.add_offset   = 0.
-    # nccyc_var.units        = 'scale   %s' % varlist["scale"][iv]
+    #cinflated fronts to netcdf
+    nv =5
+    ncfr_var = ncfr.createVariable(varnam[nv], 'f',dimnam[-2::-1])
+    # print ncfr_var.shape
+    ncfr_var.long_name = 'inflated fronts'
+    ncfr_var.width = "plus %d grid points to the west" % inf_npts
+    # ncfr_var.scale_factor = varlist["scale"][iv]
+    # ncfr_var.add_offset   = 0.
+    # ncfr_var.units        = 'scale   %s' % varlist["scale"][iv]
 
-    #print qx.shape
-    #print nccyc_var.shape
-    # nccyc_var[:,:,:] = np.swapaxes(gridcyc,0,2)
-    nccyc_var[:,:,:] = np.swapaxes(frgrd[:,:,:],0,2)
+    ncfr_var[:,:,:] = np.swapaxes(inffrgrd[:,:,:],0,2)
+
+    nv = 6
+    ncfr_var = ncfr.createVariable(varnam[nv], 'f',dimnam[-2::-1])
+    # print ncfr_var.shape
+    ncfr_var.long_name = 'wind shift'
+    # ncfr_var.scale_factor = varlist["scale"][iv]
+    # ncfr_var.add_offset   = 0.
+    ncfr_var.units        = 'm/s'
+
+    ncfr_var[:,:,:] = np.swapaxes(frgrd[:,:,:],0,2)
 
 
 
-    nccyc.close()
+
+    ncfr.close()
 
     ##---Tracks to NetCDF write---------------------------------------------------------------
 
 
-    ftrk = '../ERAint/trkgrid/trk.%d.nc' % (yr)
-    nctrk = Dataset(ftrk, 'w', format='NETCDF4')
-    nctrk.description = "Tracks from  %s" % (ftrk)
+    frlines = '../frontgrd/frline.%d.nc' % (yr)
+    print "    write to %s " % frlines
+    ncfline = Dataset(frlines, 'w', format='NETCDF4')
+    ncfline.description = "Front lines from  %s" % (fin)
 
     #dimensions
-    dimnam=('n','ntrk')
+    dimnam=('n','nf','time')
 
-    nctrk.createDimension(dimnam[0], max_trklength )
-    nctrk.createDimension(dimnam[1], None)
+    ncfline.createDimension(dimnam[0], max_npts )
+    ncfline.createDimension(dimnam[1], max_nf )
+    ncfline.createDimension(dimnam[2], None)
 
     #variables
     #  1D variable
-    ncvar = nctrk.createVariable('trklen', 'i2',dimnam[1])
-    ncvar.long_name = 'length of track'
-    ncvar[:]    = trklen[:ntrk]
-    #for one time step - test!
-    # tdelta =  datetime.datetime(cyr[ntrk-1,n],cmon[ntrk-1,n],cdate[ntrk-1,n],chour[ntrk-1,n]) - datetime.datetime(1900, 1, 1, 0)
-    # nccyc.variables[varnam[nv]][:] = divmod(tdelta.total_seconds(),3600)[0]
+    ncvar = ncfline.createVariable('time', 'f',dimnam[2])
+    ncvar.long_name = varnam[nv]
+    ncvar.calendar = 'gregorian'
+    # ncfr_var.units = 'hours since 1900-01-01 00:00:0.0'
+    ncvar.units = time0
+    ncvar[:] = dt_hours
+
+
+    ncvar = ncfline.createVariable('nf', 'i2',dimnam[2])
+    ncvar.long_name = 'number of fronts per timestep'
+    ncvar[:]    = nf_dt
 
     #  2D variables
-    frmt = "(%s,%s)f4" % (ntrk,max_trklength)
-    varlist = np.zeros( 8, dtype = {  'names': ['name', 'long_name', 'dtype',  'units', 'data'],
+    frmt = "(%s,%s,%s)f4" % (len(dt_nc),max_nf,max_npts)
+    varlist = np.zeros( 3, dtype = {  'names': ['name', 'long_name', 'dtype',  'units', 'data'],
                                     'formats': [  'a7',       'a31',    'a5',    'a44',   frmt]})
 
 
-    # varlist[0] = ( "trklen",                     "length of track", 'i2',                       '',  trklen[:ntrk])
-    varlist[1] = ("trktime",     "time of the current track point",  'i',                    time0, trktime[:ntrk,:])
-    varlist[0] = ( "trklon","longitude of the current track point",  'f',           'degrees_east',  trklon[:ntrk,:])
-    varlist[2] = ( "trklat", "latitude of the current track point",  'f',          'degrees_north',  trklat[:ntrk,:])
-    varlist[3] = ( "trkslp", "slp in cyclone center from trk file",  'f',                    'hPa',  trkslp[:ntrk,:])
-    varlist[4] = ( "trklpl",             "Laplacian from trk file",  'f','hPa/degrees_latitude**2',  trklpl[:ntrk,:])
-    varlist[5] = ( "trkdp",                  "depth from trk file",  'f',                    'hPa',   trkdp[:ntrk,:])
-    varlist[6] = ( "trkrad",                "radius from trk file",  'f',       'degrees_latitude',   trkrd[:ntrk,:])
-    varlist[7] = ( "trkiop",                      "cyclone status", 'i2','0->strong/1->weak/10->str_open/11->weak_open',  trkiop[:ntrk,:])
+    varlist[0] = ( "flon","longitude of frontal points",  'f', 'degrees_east', klon[:,:,:])
+    varlist[1] = ( "flat", "latitude of frontal points",  'f','degrees_north', klat[:,:,:])
+    varlist[2] = (   "dv",                 "wind shift",  'f',          'm/s',  kdv[:,:,:])
 
 
     # varnam=['trklen','trktime','trklon','trklat','trkslp','trkrad','trklpl','trkdp','trkiop']
 
     for iv in range(varlist['name'].size) :
         # print varlist["name"][iv]
-        ncvar = nctrk.createVariable(varlist["name"][iv], varlist["dtype"][iv],dimnam[::-1])
+        ncvar = ncfline.createVariable(varlist["name"][iv], varlist["dtype"][iv],dimnam[::-1])
         ncvar.long_name = varlist["long_name"][iv]
         ncvar.units     = varlist[    "units"][iv]
-        if varlist["name"][iv] == "trktime": ncvar.calendar = 'gregorian'
-            # print varlist[     "data"][iv]
-            # print trktime[:ntrk,:]
         ncvar[:]        = varlist[     "data"][iv]
 
 
-    # nv=0
-    # nccyc_var = nctrk.createVariable(varnam[nv], 'i2',dimnam[1])
-    # nccyc_var.long_name = varnam[nv]
-    # if varnam[nv] == 'trklen' :
-    #     nccyc_var.long_name = 'length of track'
-    #     # nccyc_var.units = 'hours since 1900-01-01 00:00:0.0'
-    #     # nccyc_var.units = time0
-    #     #for one time step - test!
-    #     # tdelta =  datetime.datetime(cyr[ntrk-1,n],cmon[ntrk-1,n],cdate[ntrk-1,n],chour[ntrk-1,n]) - datetime.datetime(1900, 1, 1, 0)
-    #     # nccyc.variables[varnam[nv]][:] = divmod(tdelta.total_seconds(),3600)[0]
-    #     nccyc_var[:] = trklen[:ntrk]
-    #
-    # nv=1
-    # nccyc_var = nctrk.createVariable(varnam[nv], 'i',dimnam[::-1])
-    # nccyc_var.long_name = varnam[nv]
-    # if varnam[nv] == 'trktime':
-    #     nccyc_var.long_name = 'time of the current track point'
-    #     nccyc_var.calendar = 'gregorian'
-    #     # nccyc_var.units = 'hours since 1900-01-01 00:00:0.0'
-    #     nccyc_var.units = time0
-    #     #for one time step - test!
-    #     # tdelta =  datetime.datetime(cyr[ntrk-1,n],cmon[ntrk-1,n],cdate[ntrk-1,n],chour[ntrk-1,n]) - datetime.datetime(1900, 1, 1, 0)
-    #     # nccyc.variables[varnam[nv]][:] = divmod(tdelta.total_seconds(),3600)[0]
-    #     nccyc_var[:,:] = trktime[:ntrk,:]
-    #
-    #
-    #
-    # nv=2
-    # nccyc_var = nctrk.createVariable(varnam[nv], 'f',dimnam[::-1])
-    # if varnam[nv] == 'trklon' :
-    #     nccyc_var.long_name = 'longitude of the current track point'
-    #     nccyc_var.units = 'degrees_east'
-    #     # nctrk.variables[varnam[nv]][:] = lats
-    #     nccyc_var[:,:] = trklon[:ntrk,:]
-    #
-    # nv=3
-    # nccyc_var = nctrk.createVariable(varnam[nv], 'f',dimnam[::-1])
-    # if varnam[nv] == 'trklat' :
-    #     nccyc_var.long_name = 'latitude of the current track point'
-    #     nccyc_var.units = 'degrees_north'
-    #     # nctrk.variables[varnam[nv]][:] = lats
-    #     nccyc_var[:,:] = trklat[:ntrk,:]
-    #
-    # nv=4
-    # nccyc_var = nctrk.createVariable(varnam[nv], 'f',dimnam[::-1])
-    # if varnam[nv] == 'trkslp' :
-    #     nccyc_var.long_name = 'slp in cyclone center from trk file'
-    #     nccyc_var.units = 'hPa'
-    #     # nctrk.variables[varnam[nv]][:] = lats
-    #     nccyc_var[:,:] = trkslp[:ntrk,:]
-    #
-    # nv=5
-    # nccyc_var = nctrk.createVariable(varnam[nv], 'f',dimnam[::-1])
-    # if varnam[nv] == 'trkrad' :
-    #     nccyc_var.long_name = 'radius from trk file'
-    #     nccyc_var.units = 'degrees_of_latitude'
-    #     # nctrk.variables[varnam[nv]][:] = lats
-    #     nccyc_var[:,:] = trkrd[:ntrk,:]
-    #
-    nctrk.close()
+    ncfline.close()
 
 
     ##---End NetCDF write---------------------------------------------------------------
