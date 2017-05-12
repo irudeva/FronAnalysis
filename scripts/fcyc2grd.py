@@ -97,7 +97,7 @@ for yr in range(2015,2016):
 
 
     #grid for front records
-    nf_dt  = np.empty(len(dt_nc),np.int16); nf_dt.fill(0)  # number of fronts per time step
+    nf_dt  = np.empty(len(dt_nc),np.int); nf_dt.fill(0)  # number of fronts per time step
     frgrd = np.empty([len(lons),len(lats),len(dt_nc)],np.int16); frgrd.fill(0)
     inffrgrd = np.copy(frgrd)
     # cycgrd_rad  = np.copy(frgrd)    #for radius from cyc tracking
@@ -303,11 +303,6 @@ for yr in range(2015,2016):
         # ncfr.variables[varnam[nv]][:] = divmod(tdelta.total_seconds(),3600)[0]
         ncfr.variables[varnam[nv]][:] = dt_hours
 
-    ncfr_var = ncfr.createVariable('nfr', 'i2',dimnam[2])
-    ncfr_var.long_name = 'number of fronts per timestep'
-    ncfr_var[:]    = nf_dt
-
-
     #front to netcdf
     nv = 3
     ncfr_var = ncfr.createVariable(varnam[nv], 'f',dimnam[2])
@@ -378,18 +373,23 @@ for yr in range(2015,2016):
     #variables
     #  1D variable
     ncvar = ncfline.createVariable('time', 'f',dimnam[2])
-    ncvar.long_name = varnam[nv]
     ncvar.calendar = 'gregorian'
     # ncfr_var.units = 'hours since 1900-01-01 00:00:0.0'
     ncvar.units = time0
     ncvar[:] = dt_hours
 
 
-    ncvar = ncfline.createVariable('nf', 'i2',dimnam[2])
+    ncvar = ncfline.createVariable('nf', 'i4',dimnam[2])
     ncvar.long_name = 'number of fronts per timestep'
     ncvar[:]    = nf_dt
 
     #  2D variables
+    ncvar = ncfline.createVariable('npts', 'i2',dimnam[:0:-1])
+    ncvar.long_name = 'number of points per front'
+    ncvar[:,:]    = npts
+
+
+
     frmt = "(%s,%s,%s)f4" % (len(dt_nc),max_nf,max_npts)
     varlist = np.zeros( 3, dtype = {  'names': ['name', 'long_name', 'dtype',  'units', 'data'],
                                     'formats': [  'a7',       'a31',    'a5',    'a44',   frmt]})
