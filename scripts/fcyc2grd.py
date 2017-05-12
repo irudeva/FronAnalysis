@@ -43,6 +43,9 @@ def dist(plat,plon,lat,lon):
     return dist
 
 
+##  time - t-1 ???
+## what is in the last column of fronts?
+
 R    = 6371032 #in m
 pi   = np.pi
 deg  = R*pi/180
@@ -96,6 +99,7 @@ for yr in range(1980,2017):
     frgrd = np.empty([len(lons),len(lats),len(dt_nc)],np.int16); frgrd.fill(0)
     # cycgrd_rad  = np.copy(frgrd)    #for radius from cyc tracking
     dvgrd  = np.copy(frgrd)
+    nf_dt  = p.empty(len(dt_nc),np.int16); frgrd.fill(0)
 
 
     #read trk
@@ -177,7 +181,7 @@ for yr in range(1980,2017):
 
             # done to here!
             npnt[ntrk-1]=nit
-            for n in range(0,nit):
+            for n in range(0,nf):
                 l = f.readline()
                 columns = l.split()
                 ciop[ntrk-1,n]=float(columns[5])
