@@ -8,9 +8,9 @@ month_abbr = (/"","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
 ; time
 year = (/2015,2015/)
 yr = 2015 ; year(0)
-mm = (/0,12/)  ;(/9,9/)
-dd = (/0,31/)
-hr = (/0,18/)
+mm = (/9,9/)  ;(/9,9/)
+dd = (/10,10/)
+hr = (/18,18/)
 
 ;ssn   / use "YYY" for whole year
 ssn="SON"
@@ -67,26 +67,14 @@ reg = "smth"
   b = addfile(fin,"r")
 
   time= b->time
-  ;flon = b->flon
-  ;nf  = short2flt( b->nf )
-  ;  = b->nf
-  ;printVarSummary(nf)
-  ;sleep(5)
-  ;print(nf)
+  datefr = cd_calendar(time, 0)
 
-  ;npts = short2flt(b->npts)
-  ;tmp = short2flt(b->npts)
   flon = b->flon
-  printVarSummary(flon)
   flat = b->flat
-  printVarSummary(flat)
   dv = b->dv
   npts = b->npts
-  printVarSummary(npts)
-  nf = b->nf
-  printVarSummary(nf)
-  print(nf)
-  status_exit(1)
+  nf = b->nfr
+  ;status_exit(1)
 
 ;************************************************
 ; Plotting - preparation
@@ -149,11 +137,10 @@ txres               = True
 ;************************************************
 ; masking
 ;************************************************
-datefr = cd_calendar(time, 0)
 
 
 do nt=0, dimsizes(time)-1
-  print ("time="+datefr(nt,:))
+  ;print ("time="+datefr(nt,:))
   ;detect season
   if(any((/1,2,12/).eq.datefr(nt,1)))then
     tssn = "DJF"
@@ -177,7 +164,7 @@ do nt=0, dimsizes(time)-1
       if (ssn.eq."YYY".or.tssn.eq.ssn)then
 
        do ifr = 0,nf(nt)-1
-       print(ifr+" "+nf(nt))
+       ;print(ifr+" "+nf(nt))
 
         if (ifr+1.ge.nf1.and.ifr+1.le.nf2)then
 
@@ -207,17 +194,18 @@ do nt=0, dimsizes(time)-1
 
 end do ; time
 
-status_exit(1)
+;status_exit(1)
 
 
 ;************************************************
 ; Plotting
 ;************************************************
 
-do ntrk = 0,dimsizes(trklen)-1
- nit = trklen(ntrk)
- if(any(frmask(ntrk,:).eq.1))then
-  print ("  "+ntrk)
+do nt=0, dimsizes(time)-1
+  print (" plotting nt = "+nt+" "+dimsizes(time)+" "+datefr(nt,0)+month_abbr(tointeger(datefr(nt,1)))+datefr(nt,2)+" "+datefr(nt,3)+"h")
+  do ifr = 0,nf(nt)-1
+  if(any(frmask(nt,ifr,:).eq.1))then
+    nit = npts(nt,ifr)
 
   ;************************************************
   ; add polyline
@@ -227,21 +215,20 @@ do ntrk = 0,dimsizes(trklen)-1
   ;print (flon(ntrk,:nit-1))
   ;print (flat(ntrk,:nit-1))
   str = unique_string("poly")            ;-- result is poly0-poly15
-  plot1@$str$ = gsn_add_polyline(wks,plot1,flon(ntrk,:nit-1),flat(ntrk,:nit-1),plres)
+  plot1@$str$ = gsn_add_polyline(wks,plot1,flon(nt,ifr,:nit-1),flat(nt,ifr,:nit-1),plres)
 
   ;************************************************
   ; add polymarker
   ;************************************************
   mres@gsMarkerColor      = 20
   str = unique_string("marker")            ;-- result is poly0-poly15
-  plot1@$str$ = gsn_add_polymarker(wks,plot1,flon(ntrk,:nit-1),flat(ntrk,:nit-1),mres)
+  ;plot1@$str$ = gsn_add_polymarker(wks,plot1,flon(nt,ifr,:nit-1),flat(nt,ifr,:nit-1),mres)
 
   ;************************************************
   ; add date
   ;************************************************
 
-  nt = 0  ;which date to show
-  datefr = cd_calendar(trktime(ntrk,:nit-1), 0)
+  it = 0  ;which date to show
 
   yy     = tointeger(datefr(nt,0))    ; Convert to integer for
   month  = tointeger(datefr(nt,1))    ; use sprinti
@@ -251,15 +238,14 @@ do ntrk = 0,dimsizes(trklen)-1
              sprinti("%0.2i", day) +"_"+sprinti("%0.2iZ", hour)
 
   txt = unique_string("txt")
-  ;plot1@$txt$ = gsn_add_text(wks,plot1,date2plot,flon(ntrk,nt)+3.,flat(ntrk,nt)-3.,txres)
-
-  delete(datefr)
+  ;plot1@$txt$ = gsn_add_text(wks,plot1,date2plot,flon(nt,ifr,it)+3.,flat(nt,ifr,it)-3.,txres)
 
   ;status_exit(1)
   ;break
  end if
+ end do  ;ifront
 
-end do  ;ntrk
+end do  ;nt
 
 draw(plot1)
 frame(wks)

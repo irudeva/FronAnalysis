@@ -84,7 +84,7 @@ inf_npts    =  2        #number of points to inflate fronts to the west
 
 
 
-for yr in range(2015,2016):
+for yr in range(1980,2016):
     #create time variable
     dt_nc = [ datetime.datetime(yr-1, 11, 1, 0)+i*timedelta(hours=6) for i in range(1764)]
     if calendar.isleap(yr):
@@ -379,7 +379,7 @@ for yr in range(2015,2016):
     ncvar[:] = dt_hours
 
 
-    ncvar = ncfline.createVariable('nf', 'i4',dimnam[2])
+    ncvar = ncfline.createVariable('nfr', 'i4',dimnam[2])
     ncvar.long_name = 'number of fronts per timestep'
     ncvar[:]    = nf_dt
 
