@@ -1,5 +1,6 @@
 begin
 ;************************************************
+; Estimates trends in frontal points
 ; Selection
 ;************************************************
 month_abbr = (/"","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
@@ -30,7 +31,7 @@ trk2 = 20000; 5518 ;20000
 
 ;reg
 
-hs ="SH"
+hs ="NH"
 
 rlon = (/-181,361/)
 rlat = (/-90,90/)
@@ -51,7 +52,7 @@ date_str2 = sprinti("%0.4i", year(1))+sprinti("%0.2i", mm(1))+ \
              sprinti("%0.2i", dd(1)) +"_"+sprinti("%0.2iZ", hr(1))
 
 regstr = reg+hs
-wks = gsn_open_wks("png","../output/frnum."+ssn+"."+date_str1+"_"+date_str2+"."+regstr )                  ; send graphics to PNG file
+wks = gsn_open_wks("png","../output/frnum_rot."+ssn+"."+date_str1+"_"+date_str2+"."+regstr )                  ; send graphics to PNG file
 
 res = True
 res@gsnDraw              = False             ; do not draw the plot
@@ -170,18 +171,20 @@ res@tiMainString        = "From "+date_str1+" to "+date_str2 + "  " + ssn+"~C~~Z
 
   end do  ; year
 
+
+
   ;************************************************
-  ; 5. Plotting
+  ; 3. Plotting
   ;************************************************
 
  print ("Start plotting")
 
  ; twist!!!
-  ; tmpgrd = frgrd
-  ; tmpgrd(:,:299) = frgrd(:,60:)
-  ; tmpgrd(:,300:) = frgrd(:,:59)
-  ; frgrd = tmpgrd
-  ; frgrd&lon = lon
+  tmpgrd = frgrd
+  tmpgrd(:,:299) = frgrd(:,60:)
+  tmpgrd(:,300:) = frgrd(:,:59)
+  frgrd = tmpgrd
+  frgrd&lon = lon
  ;end twist
 
 
