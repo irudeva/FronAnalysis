@@ -61,6 +61,11 @@ dset = "erain"
 # scheme = "UOM"
 hs   = ["0N","0S"]
 
+fyr = 2015
+lyr = 2015
+
+yr0 = 1979 # the first year in the dataset
+
 #IMPORTANT: for trk files from 16 Nov YR-1 to 31 Jan YR+1
 # netcdf reference time
 time0 = 'hours since 1900-01-01 00:00:0.0'
@@ -83,12 +88,16 @@ inf_npts    =  2        #number of points to inflate fronts to the west
 #trkiop  = np.copy(trktime); trklat.fill(0)
 
 
-
-for yr in range(1980,2016):
+for yr in range(fyr,lyr+1):
     #create time variable
-    dt_nc = [ datetime.datetime(yr-1, 11, 1, 0)+i*timedelta(hours=6) for i in range(1764)]
-    if calendar.isleap(yr):
-        dt_nc = [ datetime.datetime(yr-1, 11, 1, 0)+i*timedelta(hours=6) for i in range(1768)]
+    if yr == yr0 :
+        dt_nc = [ datetime.datetime(yr, 1, 1, 0)+i*timedelta(hours=6) for i in range(1460)]
+        if calendar.isleap(yr):
+            dt_nc = [ datetime.datetime(yr, 1, 1, 0)+i*timedelta(hours=6) for i in range(1464)]
+    else :
+        dt_nc = [ datetime.datetime(yr-1, 11, 1, 0)+i*timedelta(hours=6) for i in range(1764)]
+        if calendar.isleap(yr):
+            dt_nc = [ datetime.datetime(yr-1, 11, 1, 0)+i*timedelta(hours=6) for i in range(1768)]
 
     dt_hours = np.empty(len(dt_nc)); dt_hours.fill(0)
     for it, dt in enumerate(dt_nc) :
@@ -149,7 +158,10 @@ for yr in range(1980,2016):
             cd  = int(cdate[4:6])
             chr = int(columns[2][:2])
             if cyr < 30:
-                cyr = cyr + 2000
+                if any(cyr == iyr for iyr in range(18,23)) & any(yr == iyr for iyr in range(1998,2002)) :
+                    cyr = cyr + 1980
+                else :
+                    cyr = cyr + 2000
             else:
                 cyr = cyr + 1900
 
@@ -207,23 +219,59 @@ for yr in range(1980,2016):
                 # clat[ntrk-1,n] = 55.  #test!
                 if clen[tind,ifr] >= min_flength :
 
-                    for k in range(npts[tind,ifr]) :
+                    # interpolation front lines onto grid-associated lon/lat
+                    cpts = npts[tind,ifr]
+                    y1 = find_nearest(lats,klat[tind,ifr,0])
+                    y2 = find_nearest(lats,klat[tind,ifr,cpts-1])
 
-                        if klon[tind,ifr,k] < 0:
-                            klon[tind,ifr,k] = klon[tind,ifr,k]+360
-                        ilon = find_nearest(lons,klon[tind,ifr,k])
-                        ilat = find_nearest(lats,klat[tind,ifr,k])
+                    newcpts = abs(y2-y1)+1
 
-                        # if abs(lats[ilat]) == 90:
-                        #      frgrd[:,ilat,tind] = ifr+1
-                        #      dvgrd[:,ilat,tind]  = kdv[tind,ifr,k]
-                        #      print "WARNING: A front detected at the pole "
-                        #      print "         t ", t," ifr = %d" % ifr
-                        #      quit()
-                        # else :
+                    # check 0 line crossing
+                    if any(abs(klon[tind,ifr,i+1]-klon[tind,ifr,i])>300 for i in range(cpts-1)):
+                        print  "ERROR: front potentially crosses the zero line, check interpolation !"
+                        print "       time : ", t, " ifr = ", ifr
+                        print "       lons : ",klon[tind,ifr,:cpts]
+                        print "       diff : ",[abs(klon[tind,ifr,i+1]-klon[tind,ifr,i]) for i in range(cpts-1)]
+                        quit()
+
+                    if lats[y1]>lats[y2] :
+                        ynew = np.arange(lats[y1],lats[y2]-grdres,-grdres)
+                        xnew = np.interp(ynew, klat[tind,ifr,cpts-1::-1], klon[tind,ifr,cpts-1::-1])
+                    elif lats[y1]<lats[y2] :
+                        ynew = np.arange(lats[y1],lats[y2]+grdres,grdres)
+                        xnew = np.interp(ynew, klat[tind,ifr,:cpts], klon[tind,ifr,:cpts])
+                    else:
+                        print "ERROR: check y1 and y2"
+                        print "       time : ", t, " ifr = ", ifr
+                        print "        lat : ",klat[tind,ifr,:cpts]
+                        print "        y1 = %d, y2 = %d" % (y1,y2)
+                        quit()
+
+
+                    # for k in range(npts[tind,ifr]) :
+                    #
+                    #     if klon[tind,ifr,k] < 0:
+                    #         klon[tind,ifr,k] = klon[tind,ifr,k]+360
+                    #     ilon = find_nearest(lons,klon[tind,ifr,k])
+                    #     ilat = find_nearest(lats,klat[tind,ifr,k])
+                    #
+                    #     frgrd[ilon,ilat,tind] = ifr-(nf-cnf)+1   #ifr+1
+                    #     dvgrd[ilon,ilat,tind]  = kdv[tind,ifr,k]
+
+                    for k in range(newcpts) :
+
+                        if xnew[k] < 0:
+                            # print "--", tind,ifr,k,xnew[k]
+                            xnew[k] = xnew[k]+360
+                            # print "!+",xnew[k],ynew[k]
+                            # print find_nearest(lons, xnew[k] )
+                            # print lons[find_nearest(lons, xnew[k])]
+                        ilon = find_nearest(lons, xnew[k] )
+                        ilat = find_nearest(lats, ynew[k] )
 
                         frgrd[ilon,ilat,tind] = ifr-(nf-cnf)+1   #ifr+1
                         dvgrd[ilon,ilat,tind]  = kdv[tind,ifr,k]
+
 
                         # inflation
                         if inf_npts == 2 :

@@ -10,7 +10,7 @@ month_abbr = (/"","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
  ;ssn   / use "YYY" for whole year
   ssn="YYY"
 
- year = (/2016,2016/)
+ year = (/1979,1989/)
  yr = year(0)
  mm = (/6,8/)  ;(/9,9/)
  dd = (/0,31/)
@@ -19,11 +19,10 @@ month_abbr = (/"","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
  if(mm(0).ne.1.and.ssn.eq."YYY")then
   print("WARNING: Check the season and time settings!")
   print("  season = "+ssn)
-  print("  month = "+month_abbr(mm(0))+" to "+month_abbr(mm(1)))
+  print("  month(s) = "+month_abbr(mm(0))+" to "+month_abbr(mm(1)))
   print("  Check 'cyr' var!!!")
   sleep(1)
  end if
-
 
 ;ntrk
 trk1 = 0; 5518 ;0
@@ -52,7 +51,7 @@ date_str2 = sprinti("%0.4i", year(1))+sprinti("%0.2i", mm(1))+ \
              sprinti("%0.2i", dd(1)) +"_"+sprinti("%0.2iZ", hr(1))
 
 regstr = reg+hs
-wks = gsn_open_wks("png","../ERAint/trkgrid/cycnum."+ssn+"."+date_str1+"_"+date_str2+"."+regstr )                  ; send graphics to PNG file
+wks = gsn_open_wks("png","../output/frnum_rot."+ssn+"."+date_str1+"_"+date_str2+"."+regstr )                  ; send graphics to PNG file
 
 res = True
 res@gsnDraw              = False             ; do not draw the plot
@@ -66,18 +65,27 @@ res@cnFillPalette       = "BlueDarkRed18"  ; Set color map
 res@gsnPolar   = hs
 
 ;res@mpLimitMode="LatLon"
-res@mpMinLatF            = -90      ; range to zoom in on
-res@mpMaxLatF            = -10.
+if (hs.eq."NH")then
+ res@mpMinLatF            = 25      ; range to zoom in on
+ res@mpMaxLatF            =  90.
+ else if (hs.eq."SH")then
+   res@mpMinLatF            = -90      ; range to zoom in on
+   res@mpMaxLatF            =  -25.
+ else
+   print("ERROR: Check hs")
+ end if
+ end if
 ;res@mpMinLonF           = -60.
 ;res@mpMaxLonF           = 120.
 
 
 res@cnLevelSelectionMode = "ManualLevels"
-res@cnMinLevelValF   = 0
-res@cnMaxLevelValF   = .7
-res@cnLevelSpacingF  = .05
+res@cnMinLevelValF   = 1
+res@cnMaxLevelValF   = 7
+res@cnLevelSpacingF  = .5
 
 res@tiMainString        = date_str1 +" to "+ date_str2
+res@tiMainString        = "From "+date_str1+" to "+date_str2 + "  " + ssn+"~C~~Z90~ reg lon: ("+rlon(0)+"E to "+rlon(1)+"E)  lat: ("+rlat(0)+"N to "+rlat(1)+"N)"
 
 
 ;************************************************
@@ -86,11 +94,14 @@ res@tiMainString        = date_str1 +" to "+ date_str2
 
   do iyr =year(0),year(1)
 
-  b = addfile("../ERAint/trkgrid/cycloc_rd."+iyr+".nc","r")
-  cycloc = b->cycloc(:,:,:)
-  cycarea = b->cycarea(:,:,:)
+  frin = "../frontgrd/frgrd."+iyr+".nc"
+  print("reading file = "+frin)
+  b = addfile(frin,"r")
+  frloc = b->fronts(:,:,:)
+  frarea = b->wfronts(:,:,:)   ;the same as frlocbut 3 grid point wide, for smoother plots
   lat = b->latitude
   lon = b->longitude
+
 
   timecyc = b->time
   datecyc = cd_calendar(timecyc, 0)
@@ -100,13 +111,13 @@ res@tiMainString        = date_str1 +" to "+ date_str2
 
   if(iyr.eq.year(0))then
 
-   cycgrd = new((/dimsizes(lat),dimsizes(lon)/),float)
-   cycgrd = 0
-   cycgrd!1 = "lon"
-   cycgrd!0 = "lat"
+   frgrd = new((/dimsizes(lat),dimsizes(lon)/),float)
+   frgrd = 0
+   frgrd!1 = "lon"
+   frgrd!0 = "lat"
 
-   cycgrd&lon = lon
-   cycgrd&lat = lat
+   frgrd&lon = lon
+   frgrd&lat = lat
 
    ntstp = 0
 
@@ -138,7 +149,7 @@ res@tiMainString        = date_str1 +" to "+ date_str2
 
         if (ssn.eq."YYY".or.cssn.eq.ssn)then
 
-          cycgrd = cycgrd+where(cycarea(nt,:,:).gt.0, 1, 0)
+          frgrd = frgrd+where(frarea(nt,:,:).gt.0, 1, 0)
           ntstp  = ntstp + 1
 
          end if
@@ -152,8 +163,8 @@ res@tiMainString        = date_str1 +" to "+ date_str2
   ;  print ("ku-ku")
   end do
 
-  delete(cycloc)
-  delete(cycarea)
+  delete(frloc)
+  delete(frarea)
   delete(timecyc)
   delete(datecyc)
 
@@ -164,6 +175,16 @@ res@tiMainString        = date_str1 +" to "+ date_str2
   ;************************************************
   ; 3. Plotting
   ;************************************************
+
+ print ("Start plotting")
+
+ ; twist!!!
+  tmpgrd = frgrd
+  tmpgrd(:,:299) = frgrd(:,60:)
+  tmpgrd(:,300:) = frgrd(:,:59)
+  frgrd = tmpgrd
+  frgrd&lon = lon
+ ;end twist
 
 
  ;tstr = cd_calendar(timecyc(tcyc), 3)
@@ -182,13 +203,18 @@ res@tiMainString        = date_str1 +" to "+ date_str2
  ;print(date_str + "")
  ;status_exit(1)
 
-cycgrd = cycgrd/ntstp
+frgrd = frgrd*100/ntstp
 
-regcycgrd = cycgrd
-regcycgrd = 0
-regcycgrd(ind(lat.gt.rlat(0).and.lat.le.rlat(1)),ind(lon.gt.rlon(0).and.lon.le.rlon(1))) = cycgrd(ind(lat.gt.rlat(0).and.lat.le.rlat(1)),ind(lon.gt.rlon(0).and.lon.le.rlon(1)))
+regfrgrd = frgrd
+regfrgrd = 0
+regfrgrd(ind(lat.gt.rlat(0).and.lat.le.rlat(1)),ind(lon.gt.rlon(0).and.lon.le.rlon(1))) = frgrd(ind(lat.gt.rlat(0).and.lat.le.rlat(1)),ind(lon.gt.rlon(0).and.lon.le.rlon(1)))
 
-plot1 = gsn_csm_contour_map_polar(wks,regcycgrd,res)
+wrf_smooth_2d(regfrgrd,3)
+plot1 = gsn_csm_contour_map_polar(wks,regfrgrd,res)
+;g = smth9(regfrgrd, 0.50, -0.25, True)
+;g = smth9(g, 0.50, -0.25, True)
+;copy_VarMeta(frgrd,g)
+; plot1 = gsn_csm_contour_map_polar(wks,g,res)
 
 draw(plot1)
 frame(wks)

@@ -5,11 +5,11 @@ begin
 ; 1. slp
 ;************************************************
 yr = 2015
-mm = 1
-dd = 1
-hr = 0
+mm = 9
+dd = 7
+hr = 18
 ;t = 0
-hs ="NH"
+hs ="SH"
   a = addfile("/Users/irudeva/work/DATA/ERAint/erain.mslp."+yr+".nc","r")
 
   ;slp = short2flt(a->msl(t,:,:))
@@ -101,8 +101,17 @@ res@cnFillPalette       = "BlueDarkRed18"  ; Set color map
 res@gsnPolar   = hs
 
 ;res@mpLimitMode="LatLon"
-res@mpMinLatF            = 25      ; range to zoom in on
-res@mpMaxLatF            =  90.
+if (hs.eq."NH")then
+ res@mpMinLatF            = 25      ; range to zoom in on
+ res@mpMaxLatF            =  90.
+ else if (hs.eq."SH")then
+   res@mpMinLatF            = -90      ; range to zoom in on
+   res@mpMaxLatF            =  -25.
+ else
+   print("ERROR: Check hs")
+ end if
+ end if
+
 ;res@mpMinLonF            =  -60.
 ;res@mpMaxLonF            = 120.
 

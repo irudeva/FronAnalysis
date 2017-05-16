@@ -9,7 +9,7 @@ month_abbr = (/"","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
 year = (/2015,2015/)
 yr = 2015 ; year(0)
 mm = (/9,9/)  ;(/9,9/)
-dd = (/10,10/)
+dd = (/7,7/)
 hr = (/18,18/)
 
 ;ssn   / use "YYY" for whole year
@@ -21,7 +21,7 @@ nf2 = 20000; 5518 ;20000
 
 hs = "SH"
 ;reg
-lon = (/10,150/)
+lon = (/-90,360/)
 lat = (/-60,-30/)
 reg = "smth"
 
@@ -102,8 +102,16 @@ res@cnFillPalette       = "BlueDarkRed18"  ; Set color map
 res@gsnPolar   = hs
 
 ;res@mpLimitMode="LatLon"
-res@mpMinLatF            = -90      ; range to zoom in on
-res@mpMaxLatF            =  -10.
+if (hs.eq."NH")then
+ res@mpMinLatF            = 25      ; range to zoom in on
+ res@mpMaxLatF            =  90.
+ else if (hs.eq."SH")then
+   res@mpMinLatF            = -90      ; range to zoom in on
+   res@mpMaxLatF            =  -25.
+ else
+   print("ERROR: Check hs")
+ end if
+ end if
 ;res@mpMinLonF            =  -60.
 ;res@mpMaxLonF            = 120.
 
