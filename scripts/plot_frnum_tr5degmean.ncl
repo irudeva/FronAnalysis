@@ -1,6 +1,9 @@
 begin
 ;************************************************
 ; Estimates trends in frontal points
+; takes 5 degree average
+; the results are very similar to non-average trends
+
 ; Selection
 ;************************************************
 month_abbr = (/"","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
@@ -9,28 +12,9 @@ month_abbr = (/"","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
 ; time
 
  ;ssn   / use "YYY" for whole year
+  ssn="JJA"
 
-;ssn="DJF"
-do issn = 0,1
-  if (issn.eq.0)then
-   ssn="DJF"
-  end if
-  if (issn.eq.1)then
-    ssn="JJA"
-  end if
-
-
-do syr = 0,2
-  if (syr.eq.0)then
-   year = (/1979,1989/)
-  end if
-  if (syr.eq.1)then
-    year = (/1992,2002/)
-  end if
-  if (syr.eq.2)then
-    year = (/2005,2015/)
-  end if
-
+ year = (/2005,2015/)
  yrs = ispan (year(0),year(1),1)
  yr = year(0)
  mm = (/1,12/)  ;(/9,9/)
@@ -51,20 +35,19 @@ trk2 = 20000; 5518 ;20000
 
 ;reg
 
- hs =(/"NH","SH"/)
-;hs = "NH"
+; hs =(/"NH","SH"/)
+hs = "SH"
 
 rlon = (/-181,361/)
 rlat = (/-90,90/)
 reg = ""
 
 
-
 ;rlon = (/100,150/)
 ;rlat = (/-60,-30/)
 ;reg = "AU"+"."
 
-do ihs =0,1
+
 ;************************************************
 ; Plotting - preparation
 ;************************************************
@@ -74,8 +57,8 @@ date_str1 = sprinti("%0.4i", year(0))+sprinti("%0.2i", mm(0))+ \
 date_str2 = sprinti("%0.4i", year(1))+sprinti("%0.2i", mm(1))+ \
              sprinti("%0.2i", dd(1)) +"_"+sprinti("%0.2iZ", hr(1))
 
-regstr = reg+hs(ihs)
-wks = gsn_open_wks("png","../output/frnum_tr."+ssn+"."+date_str1+"_"+date_str2+"."+regstr )                  ; send graphics to PNG file
+regstr = reg+hs
+wks = gsn_open_wks("png","../output/frnum_tr5degmean."+ssn+"."+date_str1+"_"+date_str2+"."+regstr )                  ; send graphics to PNG file
 
 res = True
 rest = True
@@ -87,13 +70,13 @@ res@cnFillOn            = True        ; Turn on contour fill
 res@cnLinesOn           = True       ; Turn on/off contour lines
 res@cnFillPalette       = "WhiteBlueGreenYellowRed"  ; Set color map
 
-res@gsnPolar   = hs(ihs)
+res@gsnPolar   = hs
 
 ;res@mpLimitMode="LatLon"
-if (hs(ihs).eq."NH")then
+if (hs.eq."NH")then
  res@mpMinLatF            = 15      ; range to zoom in on
  res@mpMaxLatF            =  90.
- else if (hs(ihs).eq."SH")then
+ else if (hs.eq."SH")then
    res@mpMinLatF            = -90      ; range to zoom in on
    res@mpMaxLatF            =  -15.
  else
@@ -220,6 +203,13 @@ plot = new(2,graphic)                          ; create a plot array
   ;************************************************
   ; 3. calculate the regression coefficient (slope)
   ;************************************************
+  ; runing average
+
+  fr5degav = runave(frgrd, 5, 0)
+  do ilon =0,dimsizes(lon)-1
+    fr5degav(:,:,ilon) = runave (frgrd(:,:,ilon), 5, 0)
+  end do
+
   rc = new((/dimsizes(lat),dimsizes(lon)/),float) ; add coordinates!
 
   rc@units = "front/"+ssn
@@ -227,7 +217,7 @@ plot = new(2,graphic)                          ; create a plot array
   do ilat =0,dimsizes(lat)-1
     do ilon =0,dimsizes(lon)-1
 
-      regcoeff = regline( yrs-year(0), frgrd(:,ilat,ilon))          ; slope
+      regcoeff = regline( yrs-year(0), fr5degav(:,ilat,ilon))          ; slope
       rc(ilat,ilon) = regcoeff
     ;  print(lat(ilat)+" "+lon(ilon)+" "+rc(ilat,ilon) )
     ;  print (rc@yintercept)
@@ -268,7 +258,9 @@ plot = new(2,graphic)                          ; create a plot array
  ; plot num
  print ("      numbers...")
 
-avfrgrd = dim_avg_n_Wrap(frgrd,0)
+avfrgrd = dim_avg_n_Wrap(frgrd,0)  ; to keep coordinates
+avfrgrd = dim_avg_n(fr5degav,0)
+
 ; printVarSummary(avfrgrd)
 ;frgrd = frgrd*100/ntstp
 
@@ -303,11 +295,4 @@ plot(1) = gsn_csm_contour_map_polar(wks,rc,rest)
  resP@txString           = ssn+" from "+date_str1+" to "+date_str2 + "  "
   gsn_panel(wks,plot,(/2,1/),resP)               ; now draw as one plot
 
-delete(plot)
-
-end do ; ihs
-delete(frgrd)
-delete(yrs)
-end do ; years
-end do ; ssn
 end
