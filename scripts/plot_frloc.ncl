@@ -109,6 +109,8 @@ do nt=0, dimsizes(timecyc)-1
    break
   end if
 end do
+print(tslp+" "+tcyc+" "+tfr+" ")
+sleep(5)
 
 
 
