@@ -61,7 +61,7 @@ dset = "erain"
 # scheme = "UOM"
 hs   = ["0N","0S"]
 
-fyr = 2015
+fyr = 1979
 lyr = 2015
 
 yr0 = 1979 # the first year in the dataset

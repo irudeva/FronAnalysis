@@ -6,8 +6,11 @@ month_abbr = (/"","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
                     "Oct","Nov","Dec"/)
 
 ; time
-year = (/1979,1980/)
+year = (/1979,2015/)
 yrs = ispan(year(0),year(1),1)
+nyrs = dimsizes(yrs)
+x = ispan(0,nyrs-1,1)
+
 mm = (/1,12/)  ;(/9,9/)
 dd = (/1,31/)
 hr = (/0,18/)
@@ -23,7 +26,7 @@ hs = "SH"
 ;reg
 lon = (/-90,361/)
 lat = (/-40,-20/)
-reg = "20_40"
+reg = "20_40S"
 
 maxnf = 200 ; max # of fronts per timestep
 maxnp = 100 ; max # of frontal points
@@ -114,8 +117,8 @@ do yr = year(0),year(1)
   print ("fronts from "+fin)
   b = addfile(fin,"r")
 
-  time= b->time
-  datefr = cd_calendar(time, 0)
+  timefr= b->time
+  datefr = cd_calendar(timefr, 0)
 
   flon = b->flon
   flat = b->flat
@@ -140,15 +143,33 @@ do yr = year(0),year(1)
   ; masking
   ;************************************************
   ;create mask
+
+  do nt=0, dimsizes(timefr)-1
+    if (datefr(nt,0).eq.yr.and.datefr(nt,1).eq.1.and.datefr(nt,2).eq.1.and.datefr(nt,3).eq.0)then
+       tfr1 = nt
+    end if
+    if (datefr(nt,0).eq.yr.and.datefr(nt,1).eq.12.and.datefr(nt,2).eq.31.and.datefr(nt,3).eq.18)then
+       tfr2 = nt
+       break
+    end if
+  end do
+
   if(yr .eq. year(0))then
-   frmask = new((/dimsizes(yrs),dimsizes(time)+4,maxnf,maxnp/),integer)
+   if(isleapyear(yr))then
+    frmask = new((/dimsizes(yrs),tfr2-ntfr1+1,maxnf,maxnp/),integer)
+    frdv  = new((/dimsizes(yrs),tfr2-tfr1+1,maxnf/),float)
+   else
+    frmask = new((/dimsizes(yrs),tfr2-tfr1+5,maxnf,maxnp/),integer)
+    ; frdv  = new((/dimsizes(yrs),tfr2-tfr1+5,maxnf/),float)
+    frdv = new((/dimsizes(yrs),tfr2-tfr1+5,maxnf,maxnp/),float)
+   end if
    frmask = 0
-   frdv  = new((/dimsizes(yrs),dimsizes(time)+4,maxnf/),float)
    frdv  = 0
  end if
 
 
-  do nt=0, dimsizes(time)-1
+ ; do nt=0, dimsizes(timefr)-1
+ do nt=tfr1,tfr2
 
     ;print ("time="+datefr(nt,:))
     ;detect season
@@ -183,8 +204,11 @@ do yr = year(0),year(1)
            do np = 0,npts(nt,ifr)-1
             if (flat(nt,ifr,np).ge.lat(0).and.flat(nt,ifr,np).le.lat(1))then
              if (flon(nt,ifr,np).ge.lon(0).and.flon(nt,ifr,np).le.lon(1)) then
-              frmask(yr-year(0),nt,ifr,np) = im
-              frdv (yr-year(0),nt,ifr) = avg(dv(nt,ifr,:npts(nt,ifr)-1))
+              ;print(yr+" "+year(0)+" "+nt+" "+ifr+" "+np)
+
+              ; for all fronts that had at least one point in the region
+              frmask(yr-year(0),nt-tfr1,ifr,np) = im
+              frdv (yr-year(0),nt-tfr1,ifr,np) = avg(dv(nt,ifr,:npts(nt,ifr)-1))
 
               ;print (nf+"  "+np)
               ;print (flon(nt,nf,n))
@@ -209,7 +233,8 @@ do yr = year(0),year(1)
     end if ;year
 
   end do ; time
-  delete(time)
+
+  delete(timefr)
   delete(datefr)
   delete(flon)
   delete(flat)
@@ -224,136 +249,96 @@ end do  ;years
   ; front stats
   ;************************************************
 
+  frmask1d =  ndtooned(frmask)
+  frdv1d  =  ndtooned(frdv)
+
+  nfr_my    = new((/2,12,nyrs/),float)  ; the first dim is added for trends
+  nfr_my3tr = nfr_my
+
   do im =1,12
 
-  zpdf = pdfx(frdv(ind(frmask.eq.im)),0,False)
-  printVarSummary( zpdf )
+   print(month_abbr(im)+"")
+   ; print (im+" "+ind(frmask1d.eq.im))
+   nn = num(frmask1d.eq.im)
+   zpdf = pdfx(frdv1d(ind(frmask1d.eq.im)),0,False)
+   ; printVarSummary( zpdf )
 
-  ; do nt=0, dimsizes(time)-1
-  ;   ; print (" plotting nt = "+nt+" "+dimsizes(time)+" "+datefr(nt,0)+month_abbr(tointeger(datefr(nt,1)))+datefr(nt,2)+" "+datefr(nt,3)+"h")
-  ;   do ifr = 0,nf(nt)-1
-  ;     if(any(frmask(yr-year(0),nt,ifr,:).eq.im))then
-  ;       frnum(yr-year(0),im,)
-  ;     end if
-  ;   end do
-  ; end do
-  end do ; im
+   print(zpdf@bin_center+" "+zpdf*100/nn)
+
+   opt = False
+   stat = stat_dispersion(frdv1d(ind(frmask1d.eq.im)), opt )
+   ; for high tritile
+   print ("high tritile = "+stat(9))
+
+  do yr = year(0),year(1)
+
+    frmaskyr = ndtooned(frmask(yr-year(0),:,:,:))
+    frdvyr = ndtooned(frdv(yr-year(0),:,:,:))
+
+    nfr_my(0,im-1,yr-year(0)) = num(frmaskyr.eq.im)
+    ; for high tritile
+    frmasktmp = where(frdvyr.ge.stat(9),frmaskyr,0)
+    nfr_my3tr(0,im-1,yr-year(0)) = num(frmasktmp.eq.im)
+    ;print(yr+" "+nfr_my(im-1,yr-year(0)) + "  "+num(frmaskyr.eq.im))
+
+    ; calculated trends
+    rc    = regline(x,nfr_my(0,im-1,:))          ; slope
+    rc@units = "front/month"
+    nfr_my(1,im-1,:) = rc*x + rc@yintercept
+
+    rc    = regline(x,nfr_my3tr(0,im-1,:))          ; slope
+    rc@units = "front/month"
+    nfr_my3tr(1,im-1,:) = rc*x + rc@yintercept
+
+
+  end do  ;yr
+  end do  ;im
 ;************************************************
-; Plotting - preparation
+; Plotting
 ;************************************************
 
+plot = new(12,graphic)
 
+date_str1 = sprinti("%0.4i", year(0))   ;+sprinti("%0.2i", mm(0)))    ;+ \
+          ;   sprinti("%0.2i", dd(0)) +"_"+sprinti("%0.2iZ", hr(0))
+date_str2 = sprinti("%0.4i", year(1))   ;+sprinti("%0.2i", mm(1)))    ;+ \
+          ;   sprinti("%0.2i", dd(1)) +"_"+sprinti("%0.2iZ", hr(1))
 
-date_str1 = sprinti("%0.4i", year(0))+sprinti("%0.2i", mm(0))+ \
-             sprinti("%0.2i", dd(0)) +"_"+sprinti("%0.2iZ", hr(0))
-date_str2 = sprinti("%0.4i", year(1))+sprinti("%0.2i", mm(1))+ \
-             sprinti("%0.2i", dd(1)) +"_"+sprinti("%0.2iZ", hr(1))
-
-wks = gsn_open_wks("png","../output/frline."+ssn+"."+date_str1+"_"+date_str2+"."+reg+"."+hs )                  ; send graphics to PNG file
+wks = gsn_open_wks("png","../output/frN_STR."+date_str1+"_"+date_str2+"."+reg)                  ; send graphics to PNG file
 
 res = True
 res@gsnDraw              = False             ; do not draw the plot
 res@gsnFrame             = False             ; do not advance the frame
 
-;res@cnFillOn            = True        ; Turn on contour fill
-res@cnLinesOn           = True       ; Turn on/off contour lines
-res@cnFillPalette       = "BlueDarkRed18"  ; Set color map
+res@tmXBMode          = "Explicit"              ; explicit labels
+res@tmXBValues        =  x               ; location of labels
+res@tmXBLabels        =  yrs              ; labels themselves
+res@tmLabelAutoStride = True                    ; nice stride on labels
 
-res@gsnPolar   = hs
-
-;res@mpLimitMode="LatLon"
-if (hs.eq."NH")then
- res@mpMinLatF            = 25      ; range to zoom in on
- res@mpMaxLatF            =  90.
- else if (hs.eq."SH")then
-   res@mpMinLatF            = -90      ; range to zoom in on
-   res@mpMaxLatF            =  -25.
- else
-   print("ERROR: Check hs")
- end if
- end if
-;res@mpMinLonF            =  -60.
-;res@mpMaxLonF            = 120.
-
-res@tiMainString        = "From "+date_str1+" to "+date_str2 + "~C~~Z90~ reg lon: ("+lon(0)+"E to "+lon(1)+"E)  lat: ("+lat(0)+"N to "+lat(1)+"N)"
-res@tiMainFontHeightF   = 0.015
-
-;plot1 = gsn_csm_contour_map(wks,slp1,res)
-;plot1 = gsn_csm_contour_map_polar(wks,slp1(tslp,:,:),res)
-plot1 = gsn_csm_map(wks,res)
+res@xyMarkLineModes     = (/"Lines","Lines"/)  ; choose which have markers
+;res@xyMarkers           = 16                     ; choose type of marker
+;res@xyMarkerColor       = "red"                  ; Marker color
+res@xyLineColor         = "red"                  ; Marker color
+;res@xyMarkerSizeF       = 0.005                  ; Marker size (default 0.01)
+;res@xyDashPatterns      = 1                      ; solid line
+res@xyLineThicknesses   = (/1,2/)                ; set second line to 2
+;res@tmYLFormat          = "f"                    ; not necessary but nicer labels
 
 
-;draw(plot1)
-;frame(wks)
 
 
-;status_exit(1)
+do im =0,11
+  res@tiMainString      = month_abbr(im+1)
+  plot(im)  = gsn_csm_xy (wks,x,nfr_my3tr(:,im,:),res) ; create plot
+end do
 
-plres = True
-
- plres@gsLineColor      = "red"                  ; color of lines
- plres@gsLineThicknessF = 2.0                    ; thickness of lines
-
-mres = True
-
- mres@gsMarkerIndex = 16
- mres@gsMarkerSizeF = .003
-
-txres               = True
- txres@txFontHeightF = 0.01
-
-;
 ;************************************************
-; Plotting
+; create panel
 ;************************************************
+  resP                    = True                 ; modify the panel plot
+  ; resP@gsnPanelMainString = "A common title"     ; new resource added in NCL V6.4.0
+ resP@txString           = "Number of strong fronts vs STR lat from "+date_str1+" to "+date_str2 + "  "
+  gsn_panel(wks,plot,(/6,2/),resP)               ; now draw as one plot
 
-do nt=0, dimsizes(time)-1
-  print (" plotting nt = "+nt+" "+dimsizes(time)+" "+datefr(nt,0)+month_abbr(tointeger(datefr(nt,1)))+datefr(nt,2)+" "+datefr(nt,3)+"h")
-  do ifr = 0,nf(nt)-1
-  if(any(frmask(nt,ifr,:).eq.1))then
-    nit = npts(nt,ifr)
-
-  ;************************************************
-  ; add polyline
-  ;************************************************
-
-  ;print (ntrk)
-  ;print (flon(ntrk,:nit-1))
-  ;print (flat(ntrk,:nit-1))
-  str = unique_string("poly")            ;-- result is poly0-poly15
-  plot1@$str$ = gsn_add_polyline(wks,plot1,flon(nt,ifr,:nit-1),flat(nt,ifr,:nit-1),plres)
-
-  ;************************************************
-  ; add polymarker
-  ;************************************************
-  mres@gsMarkerColor      = 20
-  str = unique_string("marker")            ;-- result is poly0-poly15
-  ;plot1@$str$ = gsn_add_polymarker(wks,plot1,flon(nt,ifr,:nit-1),flat(nt,ifr,:nit-1),mres)
-
-  ;************************************************
-  ; add date
-  ;************************************************
-
-  it = 0  ;which date to show
-
-  yy     = tointeger(datefr(nt,0))    ; Convert to integer for
-  month  = tointeger(datefr(nt,1))    ; use sprinti
-  day    = tointeger(datefr(nt,2))
-  hour   = tointeger(datefr(nt,3))
-  date2plot = sprinti("%0.4i", yy)+month_abbr(month)+ \
-             sprinti("%0.2i", day) +"_"+sprinti("%0.2iZ", hour)
-
-  txt = unique_string("txt")
-  ;plot1@$txt$ = gsn_add_text(wks,plot1,date2plot,flon(nt,ifr,it)+3.,flat(nt,ifr,it)-3.,txres)
-
-  ;status_exit(1)
-  ;break
- end if
- end do  ;ifront
-
-end do  ;nt
-
-draw(plot1)
-frame(wks)
 
 end
