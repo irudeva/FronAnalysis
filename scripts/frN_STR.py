@@ -11,7 +11,7 @@ month_abbr = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
                     "Oct","Nov","Dec"]
 
 # time
-year = [1979,1984]#2016]
+year = [1979,2016]
 yrs = np.arange(year[0],year[1],1)
 nyrs = np.size(yrs)
 x = np.arange(0,nyrs-1,1)
@@ -270,7 +270,7 @@ for im in range( 1,13):
 plt.close('all')
 
 f, ax = plt.subplots(6, 2,  sharex='col', sharey='row')
-plt.suptitle('STR intensity vs number of fronts, SH',fontsize=14)
+plt.suptitle('STR intensity vs number of fronts, %s'%reg,fontsize=14)
 
 var1 = nfr_my
 yax1 = [1000, 1700]
