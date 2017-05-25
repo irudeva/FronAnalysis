@@ -268,70 +268,82 @@ for im in range( 1,13):
 # Plotting
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 plt.close('all')
+for ifig in np.arange(4):
+    f, ax = plt.subplots(6, 2,  sharex='col', sharey='row')
 
-f, ax = plt.subplots(6, 2,  sharex='col', sharey='row')
-plt.suptitle('STR intensity vs number of fronts, %s'%reg,fontsize=14)
+    if ifig ==0:
+        plt.suptitle('STR intensity vs number of fronts, %s'%reg,fontsize=14)
+    if ifig ==1:
+        plt.suptitle('STR intensity vs number of strong fronts, %s'%reg,fontsize=14)
+    if ifig ==2:
+        plt.suptitle('STR location vs number of fronts, %s'%reg,fontsize=14)
+    if ifig ==3:
+        plt.suptitle('STR location vs number of strong fronts, %s'%reg,fontsize=14)
 
-var1 = nfr_my
-yax1 = [1000, 1700]
-yax1label = 'number of fronts'
-var1legend = 'N of fronts'
+    if ifig ==0 or ifig == 2:
+        var1 = nfr_my
+        yax1 = [900, 1800]
+        yax1label = 'number of fronts'
+        var1legend = 'N of fronts'
 
-# var1 = nfr_my3tr
-# yax1 = [300, 700]
-# yax1label = 'number of fronts'
-# var1legend = 'N of strong fronts (int > 67th perc)'
-
-
-var2 = STRslp
-yax2 = [1010, 1025]
-yax2label = 'MSL Pressure (Pa)'
-var2legend = 'STR intendity'
-
-# var2 = STRlat
-# yax2 = [-40, -25]
-# yax2label = 'latitude'
-# var2legend = 'STR location'
-
-
-for ic in np.arange(2):
-    for ir in np.arange(6):
-        im = ir+ic*6
-        a = ax[ir, ic]
-        a2 = a.twinx()
-
-        a.plot(yrs,var1[0,im,:],color='b',lw=1,label=var1legend)
-        a2.plot(yrs,var2[0,im,:],color='g',lw=1,label=var2legend)
-        # ax[ir, ic].set_title('STR intensity, %s, SH'%month_abbr[ir+ic*6+1])
-        a.axis((year[0]-1, year[1], yax1[0], yax1[1]))
-        a2.axis((year[0]-1, year[1], yax2[0], yax2[1]))
-
-        if im == 3:
-            ax[ir, ic].set_ylabel(yax1label,color='b')
-        if im == 9:
-            a2.set_ylabel(yax2label,color='g')
-
-        #  trend
-        a.plot(yrs,var1[1,im,:],color='b',lw=2)
-        a2.plot(yrs,var2[1,im,:],color='g',lw=2)
-
-        cc = np.corrcoef(var1[0,im,:],var2[0,im,:])
-        cc_dt = np.corrcoef(var1[0,im,:]-var1[1,im,:],var2[0,im,:]-var2[1,im,:])
-        a.set_title(' %s, %s, r = %.2f, r_dt = %.2f'%(month_abbr[ir+ic*6+1],reg,cc[1,0],cc_dt[1,0]))
-
-        if im==12:
-            ax[ir, ic].legend(loc='lower right')
-
-plt.setp([a.set_xlabel('Year') for a in ax[5, :]])
-a=ax[-1, -1]
-# ax[0, 0].xlabel('Year')
-# ax[0, 0].ylabel('MSL Pressure (Pa)')
-# ax[0, 0].axis((1979, 2014, 1012, 1030))
+    if ifig ==1 or ifig == 3:
+        var1 = nfr_my3tr
+        yax1 = [300, 700]
+        yax1label = 'number of fronts'
+        var1legend = 'N of strong fronts (int > 67th perc)'
 
 
-f.subplots_adjust(hspace=0.3)
+    if ifig ==0 or ifig == 1:
+        var2 = STRslp
+        yax2 = [1010, 1025]
+        yax2label = 'MSL Pressure (Pa)'
+        var2legend = 'STR intendity'
 
-plt.show()
+    if ifig ==2 or ifig == 3:
+        var2 = STRlat
+        yax2 = [-40, -25]
+        yax2label = 'latitude'
+        var2legend = 'STR location'
+
+
+    for ic in np.arange(2):
+        for ir in np.arange(6):
+            im = ir+ic*6
+            a = ax[ir, ic]
+            a2 = a.twinx()
+
+            a.plot(yrs,var1[0,im,:],color='b',lw=1,label=var1legend)
+            a2.plot(yrs,var2[0,im,:],color='g',lw=1,label=var2legend)
+            # ax[ir, ic].set_title('STR intensity, %s, SH'%month_abbr[ir+ic*6+1])
+            a.axis((year[0]-1, year[1], yax1[0], yax1[1]))
+            a2.axis((year[0]-1, year[1], yax2[0], yax2[1]))
+
+            if im == 3:
+                ax[ir, ic].set_ylabel(yax1label,color='b')
+            if im == 9:
+                a2.set_ylabel(yax2label,color='g')
+
+            #  trend
+            a.plot(yrs,var1[1,im,:],color='b',lw=2)
+            a2.plot(yrs,var2[1,im,:],color='g',lw=2)
+
+            cc = np.corrcoef(var1[0,im,:],var2[0,im,:])
+            cc_dt = np.corrcoef(var1[0,im,:]-var1[1,im,:],var2[0,im,:]-var2[1,im,:])
+            a.set_title(' %s, %s, r = %.2f, r_dt = %.2f'%(month_abbr[ir+ic*6+1],reg,cc[1,0],cc_dt[1,0]))
+
+            if im==12:
+                ax[ir, ic].legend(loc='lower right')
+
+    plt.setp([a.set_xlabel('Year') for a in ax[5, :]])
+    a=ax[-1, -1]
+    # ax[0, 0].xlabel('Year')
+    # ax[0, 0].ylabel('MSL Pressure (Pa)')
+    # ax[0, 0].axis((1979, 2014, 1012, 1030))
+
+
+    f.subplots_adjust(hspace=0.3)
+
+    plt.show()
 
 
 
