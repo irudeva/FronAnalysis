@@ -281,7 +281,7 @@ for im in range( 1,13):
 plt.close('all')
 for ifig in np.arange(4):
     # fig = plt.figure(ifig)
-    f, ax = fig.subplots(6, 2,  sharex='col', sharey='row')
+    f, ax = plt.subplots(6, 2,  sharex='col', sharey='row')
 
     if ifig ==0:
         plt.suptitle('STR intensity vs number of fronts, %s'%reg,fontsize=14)
