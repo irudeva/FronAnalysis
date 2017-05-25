@@ -11,7 +11,7 @@ month_abbr = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
                     "Oct","Nov","Dec"]
 
 # time
-year = [1979,2016]
+year = [1979,1984]
 yrs = np.arange(year[0],year[1],1)
 nyrs = np.size(yrs)
 x = np.arange(0,nyrs-1,1)
@@ -202,6 +202,7 @@ for yr in yrs:
       else:
           frmask = np.zeros((nyrs,tfr2-tfr1+5,maxnf),dtype=np.int)
           frdv   = np.zeros((nyrs,tfr2-tfr1+5,maxnf),dtype=np.float32)
+      fr_northlat = np.zeros_like(frdv)
 
 
   for nt in np.arange(tfr1,tfr2+1):
@@ -216,7 +217,7 @@ for yr in yrs:
                                   if flon[nt,ifr,ip]>=lon[0] and flon[nt,ifr,ip]<=lon[1]:
                                       frmask[yr-year[0],nt-tfr1,ifr] = fdt[nt].month
                                       frdv[yr-year[0],nt-tfr1,ifr] = np.mean(dv[nt,ifr,:npts[nt,ifr]])
-                                      fr_northlat[yr-year[0],nt-tfr1,ifr] = np.
+                                      fr_northlat[yr-year[0],nt-tfr1,ifr] = np.amax(flat[nt,ifr,:npts[nt,ifr]])
                                     #   print yr-year[0],nt-tfr1,ifr, "   ",im,month_abbr[im], frmask[yr-year[0],nt-tfr1,ifr]
                                     #   print np.sum(frmask==im)
                                       break
@@ -230,7 +231,8 @@ for yr in yrs:
 dvcrit = np.zeros(12,dtype = np.float)
 nfr_my    = np.zeros([ 2,12,nyrs],dtype=np.float)
 nfr_my3tr = np.zeros_like(nfr_my)
-
+fr_northlat_my = np.zeros_like(nfr_my)
+fr_northlat_my3tr = np.zeros_like(nfr_my)
 
 for im in range( 1,13):
 
@@ -247,8 +249,11 @@ for im in range( 1,13):
 for yr in yrs:
     for im in range( 1,13):
         nfr_my[0,im-1,yr-year[0]]=np.sum(frmask[yr-year[0],:,:]==im)
+        fr_northlat_my[0,im-1,yr-year[0]]=np.mean(frmask[yr-year[0],:,:]==im)
         tmp  = frdv[yr-year[0],:,:][np.where(frmask[yr-year[0],:,:] == im)]
         nfr_my3tr[0,im-1,yr-year[0]]=np.count_nonzero(np.where(tmp>=dvcrit[im-1], 1,0))
+        tmp1 = fr_northlat[yr-year[0],:,:][np.where(frmask[yr-year[0],:,:] == im)]
+        fr_northlat_my3tr[0,im-1,yr-year[0]]=np.mean(tmp1[p.where(tmp>=dvcrit[im-1])]))
         # nfr_my3tr[im-1,yr-year[0]]=np.sum(frmask[yr-year[0],:,:]==im and frdv[yr-year[0],:,:]>=dvcrit[im-1])
         # print yr, im, month_abbr[im], nfr_my[0,im-1,yr-year[0]],nfr_my3tr[0,im-1,yr-year[0]]
         # print np.count_nonzero(np.where(frmask[yr-year[0],:,:]== im, 1,0))
