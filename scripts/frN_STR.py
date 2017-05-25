@@ -43,58 +43,58 @@ maxnp = 100 # max # of frontal points
 # 1. slp
 # ************************************************
 
-# for yr in yrs:
-#   slpyr = yr
-#   fin = "/Users/irudeva/work/DATA/ERAint/Mslp_highres/erain.mslp.avm.%d.nc"%slpyr
-#   print fin
-#   nc = Dataset(fin, 'r')
-#
-#   # varnam=['longitude','latitude','time','msl']
-#   # v=0
-#   # for var in varnam:
-#   #   if nc.variables[varnam[v]].name != var:
-#   #       print "Variables don't agree", var, nc.variables[varnam[v]].name, v
-#   #       exit()
-#   #   v += 1
-#
-#   # nc_attrs, nc_dims, nc_vars = ncdump(nc)
-#
-#   # print nc_attrs, nc_dims, nc_vars
-#   print nc.variables.keys()
-#   if nc.variables.keys()[0]=="lon":
-#       lonslp = nc.variables['lon'][:]
-#       latslp = nc.variables['lat'][:]
-#   elif nc.variables.keys()[0]=="longitude":
-#       lonslp = nc.variables['longitude'][:]
-#       latslp = nc.variables['lattitude'][:]
-#   else:
-#      print"Check lon/lat names in the netcdf file, %d "%yr
-#   time = nc.variables['time'][:]
-#   mslp = nc.variables['msl'][:]/100.
-#
-#   dt_nc = [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
-#        for t in time]
-#   print dt_nc[1].year
-#
-#
-#   latslpSH = latslp[np.logical_and(latslp<-20,latslp>-65)]
-#   mslpSH   = mslp[:,np.logical_and(latslp<-20,latslp>-65),:]
-#
-#   # zonal average
-#   slp_z = np.mean(mslpSH[:,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=2)
-#
-#   if yr==year[0]:
-#       STRslp = np.zeros((12,nyrs),dtype=np.float)
-#       STRlat = np.zeros_like(STRslp)
-#
-#   for im in np.arange(slp_z[:,0].size):
-#     #   print dt_nc[im].month
-#       STRslp[im,yr-year[0]] = np.amax(slp_z[im,:])
-#       STRlat[im,yr-year[0]] = latslpSH[np.argmax(slp_z[im,:])]
-#     #   print STRlat[im,yr-year[0]], STRslp[im,yr-year[0]]
-#
-#   nc.close()
-#
+for yr in yrs:
+  slpyr = yr
+  fin = "/Users/irudeva/work/DATA/ERAint/Mslp_highres/erain.mslp.avm.%d.nc"%slpyr
+  print fin
+  nc = Dataset(fin, 'r')
+
+  # varnam=['longitude','latitude','time','msl']
+  # v=0
+  # for var in varnam:
+  #   if nc.variables[varnam[v]].name != var:
+  #       print "Variables don't agree", var, nc.variables[varnam[v]].name, v
+  #       exit()
+  #   v += 1
+
+  # nc_attrs, nc_dims, nc_vars = ncdump(nc)
+
+  # print nc_attrs, nc_dims, nc_vars
+  print nc.variables.keys()
+  if nc.variables.keys()[0]=="lon":
+      lonslp = nc.variables['lon'][:]
+      latslp = nc.variables['lat'][:]
+  elif nc.variables.keys()[0]=="longitude":
+      lonslp = nc.variables['longitude'][:]
+      latslp = nc.variables['lattitude'][:]
+  else:
+     print"Check lon/lat names in the netcdf file, %d "%yr
+  time = nc.variables['time'][:]
+  mslp = nc.variables['msl'][:]/100.
+
+  dt_nc = [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
+       for t in time]
+  print dt_nc[1].year
+
+
+  latslpSH = latslp[np.logical_and(latslp<-20,latslp>-65)]
+  mslpSH   = mslp[:,np.logical_and(latslp<-20,latslp>-65),:]
+
+  # zonal average
+  slp_z = np.mean(mslpSH[:,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=2)
+
+  if yr==year[0]:
+      STRslp = np.zeros((2,12,nyrs),dtype=np.float)
+      STRlat = np.zeros_like(STRslp)
+
+  for im in np.arange(slp_z[:,0].size):
+    #   print dt_nc[im].month
+      STRslp[0,im,yr-year[0]] = np.amax(slp_z[im,:])
+      STRlat[0,im,yr-year[0]] = latslpSH[np.argmax(slp_z[im,:])]
+    #   print STRlat[im,yr-year[0]], STRslp[im,yr-year[0]]
+
+  nc.close()
+
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #  Plotting
@@ -222,7 +222,7 @@ for yr in yrs:
 # ************************************************
 
 dvcrit = np.zeros(12,dtype = np.float)
-nfr_my    = np.zeros([ 12,nyrs],dtype=np.float)
+nfr_my    = np.zeros([ 2,12,nyrs],dtype=np.float)
 nfr_my3tr = np.zeros_like(nfr_my)
 
 
@@ -240,12 +240,100 @@ for im in range( 1,13):
 
 for yr in yrs:
     for im in range( 1,13):
-        nfr_my[im-1,yr-year[0]]=np.sum(frmask[yr-year[0],:,:]==im)
+        nfr_my[0,im-1,yr-year[0]]=np.sum(frmask[yr-year[0],:,:]==im)
         tmp  = frdv[yr-year[0],:,:][np.where(frmask[yr-year[0],:,:] == im)]
-        nfr_my3tr[im-1,yr-year[0]]=np.count_nonzero(np.where(tmp>=dvcrit[im-1], 1,0))
+        nfr_my3tr[0,im-1,yr-year[0]]=np.count_nonzero(np.where(tmp>=dvcrit[im-1], 1,0))
         # nfr_my3tr[im-1,yr-year[0]]=np.sum(frmask[yr-year[0],:,:]==im and frdv[yr-year[0],:,:]>=dvcrit[im-1])
         print yr, im, month_abbr[im], nfr_my[im-1,yr-year[0]],nfr_my3tr[im-1,yr-year[0]]
         # print np.count_nonzero(np.where(frmask[yr-year[0],:,:]== im, 1,0))
+
+# ************************************************
+# trends
+# ************************************************
+
+for im in range( 1,13):
+    slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,nfr_my[0,im-1,:])
+    nfr_my[0,im-1,:] = intercept + (slope * yrs)
+
+    slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,nfr_my3tr[0,im-1,:])
+    nfr_my3tr[0,im-1,:] = intercept + (slope * yrs)
+
+    slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRlat[0,im-1,:])
+    STRlat[0,im-1,:] = intercept + (slope * yrs)
+
+    slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRslp[0,im-1,:])
+    STRslp[0,im-1,:] = intercept + (slope * yrs)
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ Plotting
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+plt.close('all')
+
+f, ax = plt.subplots(6, 2,  sharex='col', sharey='row')
+plt.suptitle('STR intensity vs number of fronts, SH',fontsize=14)
+
+var1 = nfr_my
+yax1 = [1000, 1700]
+yax1label = 'number of fronts'
+var1legend = 'N of fronts'
+
+# var1 = nfr_my3tr
+# yax1 = [300, 700]
+# yax1label = 'number of fronts'
+# var1legend = 'N of strong fronts (int > 67th perc)'
+
+
+var2 = STRslp
+yax2 = [1010, 1025]
+yax2label = 'MSL Pressure (Pa)'
+var2legend = 'STR intendity'
+
+# var2 = STRlat
+# yax2 = [-40, -25]
+# yax2label = 'latitude'
+# var2legend = 'STR location'
+
+
+for ic in np.arange(2):
+    for ir in np.arange(6):
+        im = ir+ic*6
+        a = ax[ir, ic]
+        a2 = a.twinx()
+
+        a.plot(yrs,var1[0,im,:],color='b',lw=1,label=var1legend)
+        a2.plot(yrs,var2[0,im,:],color='g',lw=1,label=var2legend)
+        # ax[ir, ic].set_title('STR intensity, %s, SH'%month_abbr[ir+ic*6+1])
+        a.axis((year[0]-1, year[1], yax2[0], yax2[1]))
+        a2.axis((year[0]-1, year[1], yax2[0], yax2[1]))
+
+        if im == 3:
+            ax[ir, ic].set_ylabel(yax1label,color='b')
+        if im == 9:
+            a2.set_ylabel(yax2label,color='g')
+
+        #  trend
+        a.plot(yrs,var1[1,im,:],color='b',lw=2)
+        a2.plot(yrs,var2[1,im,:],color='g',lw=2)
+
+        cc = np.corrcoef(var1[0,im,:],var2[0,im,:])
+        cc_dt = np.corrcoef(var1[0,im,:]-var1[1,im,:],var2[0,im,:]-var2[1,im,:])
+        a.set_title(' %s, %s, r = %d, r_dt = %d'%(month_abbr[ir+ic*6+1],reg,cc,cc_dt)
+
+        if im==12:
+            ax[ir, ic].legend(loc='lower right')
+
+plt.setp([a.set_xlabel('Year') for a in ax[5, :]])
+a=ax[-1, -1]
+# ax[0, 0].xlabel('Year')
+# ax[0, 0].ylabel('MSL Pressure (Pa)')
+# ax[0, 0].axis((1979, 2014, 1012, 1030))
+
+
+f.subplots_adjust(hspace=0.3)
+
+plt.show()
+
+
 
 # # ************************************************
 # # Plotting
