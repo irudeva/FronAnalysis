@@ -11,7 +11,7 @@ month_abbr = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
                     "Oct","Nov","Dec"]
 
 # time
-year = [1979,1984]
+year = [1979,2016]
 yrs = np.arange(year[0],year[1],1)
 nyrs = np.size(yrs)
 x = np.arange(0,nyrs-1,1)
@@ -257,7 +257,7 @@ for yr in yrs:
         nfr_my3tr[0,im-1,yr-year[0]]=np.count_nonzero(np.where(tmp>=dvcrit[im-1], 1,0))
         fr_northlat_my3tr[0,im-1,yr-year[0]]=np.mean(tmp0[np.where(tmp>=dvcrit[im-1])])
         # nfr_my3tr[im-1,yr-year[0]]=np.sum(frmask[yr-year[0],:,:]==im and frdv[yr-year[0],:,:]>=dvcrit[im-1])
-        print yr, im, month_abbr[im], fr_northlat_my[0,im-1,yr-year[0]],fr_northlat_my3tr[0,im-1,yr-year[0]]
+        # print yr, im, month_abbr[im], fr_northlat_my[0,im-1,yr-year[0]],fr_northlat_my3tr[0,im-1,yr-year[0]]
         # print np.count_nonzero(np.where(frmask[yr-year[0],:,:]== im, 1,0))
 
 # ************************************************
@@ -359,8 +359,6 @@ for ifig in np.arange(4,8):
             im = ir+ic*6
             a = ax[ir, ic]
             a2 = a.twinx()
-
-            print var1
 
             a.plot(yrs,var1[0,im,:],color='b',lw=1,label=var1legend)
             a2.plot(yrs,var2[0,im,:],color='g',lw=1,label=var2legend)
