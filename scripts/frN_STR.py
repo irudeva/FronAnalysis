@@ -360,4 +360,4 @@ for ifig in np.arange(4):
     f.subplots_adjust(hspace=0.3)
 
     plt.show()
-    fig.savefig(fout)
+    f.savefig(fout)
