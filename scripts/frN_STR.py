@@ -331,7 +331,6 @@ for ifig in np.arange(4,5):
         var2legend = 'STR intendity'
 
     if any ([2,3,6,7] == ifig ):
-    if ifig ==2 or ifig == 3:
         var2 = STRlat
         yax2 = [-40, -25]
         yax2label = 'latitude'
