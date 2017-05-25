@@ -326,7 +326,7 @@ for ifig in np.arange(4,8):
         var1legend = 'front lat north'
 
     if any ([5,7] == ifig ):
-        var1 = fr_northlat_my3tri
+        var1 = fr_northlat_my3tr
         yax1 = [-40, -25]
         yax1label = 'latitude'
         var1legend = 'strong front lat north'
