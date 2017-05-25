@@ -29,13 +29,13 @@ nf2 = 20000# 5518 ;20000
 
 hs = "SH"
 # reg
-lon = [ -90,361]
-lat = [ -40,-20]
-reg = "20_40S"
-
 # lon = [ -90,361]
 # lat = [ -40,-20]
 # reg = "20_40S"
+
+lon = [ 0,150]
+lat = [ -40,-20]
+reg = "0_150E.20_40S"
 
 
 maxnf = 200 # max # of fronts per timestep
@@ -306,6 +306,15 @@ for ifig in np.arange(4,8):
     if ifig ==4:
         plt.suptitle('STR intensity vs north lat of fronts, %s'%reg,fontsize=14)
         fout = "../output/frNorthLat_STRint.%s.png"%reg
+    if ifig ==5:
+        plt.suptitle('STR intensity vs north lat of strong fronts, %s'%reg,fontsize=14)
+        fout = "../output/frNorthLatstr_STRint.%s.png"%reg
+    if ifig ==6:
+        plt.suptitle('STR location vs north lat of fronts, %s'%reg,fontsize=14)
+        fout = "../output/frNorthLat_STRloc.%s.png"%reg
+    if ifig ==7:
+        plt.suptitle('STR location vs north lat of strong fronts, %s'%reg,fontsize=14)
+        fout = "../output/frNorthLatstr_STRloc.%s.png"%reg
 
     if ifig ==0 or ifig == 2:
         var1 = nfr_my
