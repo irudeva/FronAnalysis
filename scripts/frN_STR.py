@@ -303,7 +303,7 @@ for ic in np.arange(2):
         a.plot(yrs,var1[0,im,:],color='b',lw=1,label=var1legend)
         a2.plot(yrs,var2[0,im,:],color='g',lw=1,label=var2legend)
         # ax[ir, ic].set_title('STR intensity, %s, SH'%month_abbr[ir+ic*6+1])
-        a.axis((year[0]-1, year[1], yax2[0], yax2[1]))
+        a.axis((year[0]-1, year[1], yax1[0], yax1[1]))
         a2.axis((year[0]-1, year[1], yax2[0], yax2[1]))
 
         if im == 3:
@@ -317,7 +317,7 @@ for ic in np.arange(2):
 
         cc = np.corrcoef(var1[0,im,:],var2[0,im,:])
         cc_dt = np.corrcoef(var1[0,im,:]-var1[1,im,:],var2[0,im,:]-var2[1,im,:])
-        a.set_title(' %s, %s, r = %d, r_dt = %d'%(month_abbr[ir+ic*6+1],reg,cc[1,0],cc_dt[1,0]))
+        a.set_title(' %s, %s, r = %.2f, r_dt = %.2f'%(month_abbr[ir+ic*6+1],reg,cc[1,0],cc_dt[1,0]))
 
         if im==12:
             ax[ir, ic].legend(loc='lower right')
