@@ -317,11 +317,7 @@ for ic in np.arange(2):
 
         cc = np.corrcoef(var1[0,im,:],var2[0,im,:])
         cc_dt = np.corrcoef(var1[0,im,:]-var1[1,im,:],var2[0,im,:]-var2[1,im,:])
-        print cc, cc[1,0]
-        print cc_dt
-        print var1[0,im,:]
-        print var2[0,im,:]
-        a.set_title(' %s, %s, r = %d, r_dt = %d'%(month_abbr[ir+ic*6+1],reg,cc,cc_dt))
+        a.set_title(' %s, %s, r = %d, r_dt = %d'%(month_abbr[ir+ic*6+1],reg,cc[1,0],cc_dt[1,0]))
 
         if im==12:
             ax[ir, ic].legend(loc='lower right')
