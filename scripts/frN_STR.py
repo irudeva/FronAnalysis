@@ -279,7 +279,7 @@ for im in range( 1,13):
 # Plotting
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 plt.close('all')
-for ifig in np.arange(4):
+for ifig in np.arange(4,5):
     # fig = plt.figure(ifig)
     f, ax = plt.subplots(6, 2,  sharex='col', sharey='row')
 
@@ -295,6 +295,9 @@ for ifig in np.arange(4):
     if ifig ==3:
         plt.suptitle('STR location vs number of strong fronts, %s'%reg,fontsize=14)
         fout = "../output/frNstr_STRloc.%s.png"%reg
+    if ifig ==4:
+        plt.suptitle('STR intensity vs north lat of fronts, %s'%reg,fontsize=14)
+        fout = "../output/frNorthLat_STRint.%s.png"%reg
 
     if ifig ==0 or ifig == 2:
         var1 = nfr_my
@@ -308,13 +311,26 @@ for ifig in np.arange(4):
         yax1label = 'number of fronts'
         var1legend = 'N of strong fronts (int > 67th perc)'
 
+    if any ([4,6] == ifig ):
+        var1 = fr_northlat_my
+        yax1 = [-40, -25]
+        yax1label = 'latitude'
+        var1legend = 'front lat north'
 
-    if ifig ==0 or ifig == 1:
+    if any ([5,7] == ifig ):
+        var1 = fr_northlat_my3tri
+        yax1 = [-40, -25]
+        yax1label = 'latitude'
+        var1legend = 'strong front lat north'
+
+
+    if any ([0,1,4,5] == ifig ):
         var2 = STRslp
         yax2 = [1010, 1025]
         yax2label = 'MSL Pressure (Pa)'
         var2legend = 'STR intendity'
 
+    if any ([2,3,6,7] == ifig ):
     if ifig ==2 or ifig == 3:
         var2 = STRlat
         yax2 = [-40, -25]
@@ -347,11 +363,11 @@ for ifig in np.arange(4):
             cc_dt = np.corrcoef(var1[0,im,:]-var1[1,im,:],var2[0,im,:]-var2[1,im,:])
             a.set_title(' %s, %s, r = %.2f, r_dt = %.2f'%(month_abbr[ir+ic*6+1],reg,cc[1,0],cc_dt[1,0]))
 
-            if im==12:
+            if im==11:
                 ax[ir, ic].legend(loc='lower right')
 
     plt.setp([a.set_xlabel('Year') for a in ax[5, :]])
-    a=ax[-1, -1]
+    # a=ax[-1, -1]
     # ax[0, 0].xlabel('Year')
     # ax[0, 0].ylabel('MSL Pressure (Pa)')
     # ax[0, 0].axis((1979, 2014, 1012, 1030))
