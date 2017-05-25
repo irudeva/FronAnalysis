@@ -250,7 +250,7 @@ for im in range( 1,13):
 for yr in yrs:
     for im in range( 1,13):
         nfr_my[0,im-1,yr-year[0]]=np.sum(frmask[yr-year[0],:,:]==im)
-        fr_northlat_my[0,im-1,yr-year[0]]=np.mean(frmask[yr-year[0],:,:]==im)
+        fr_northlat_my[0,im-1,yr-year[0]]=np.mean(fr_northlat_my[frmask[yr-year[0],:,:]==im])
         tmp  = frdv[yr-year[0],:,:][np.where(frmask[yr-year[0],:,:] == im)]
         nfr_my3tr[0,im-1,yr-year[0]]=np.count_nonzero(np.where(tmp>=dvcrit[im-1], 1,0))
         tmp1 = fr_northlat[yr-year[0],:,:][np.where(frmask[yr-year[0],:,:] == im)]
