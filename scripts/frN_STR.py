@@ -253,16 +253,16 @@ for yr in yrs:
 
 for im in range( 1,13):
     slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,nfr_my[0,im-1,:])
-    nfr_my[0,im-1,:] = intercept + (slope * yrs)
+    nfr_my[1,im-1,:] = intercept + (slope * yrs)
 
     slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,nfr_my3tr[0,im-1,:])
-    nfr_my3tr[0,im-1,:] = intercept + (slope * yrs)
+    nfr_my3tr[1,im-1,:] = intercept + (slope * yrs)
 
     slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRlat[0,im-1,:])
-    STRlat[0,im-1,:] = intercept + (slope * yrs)
+    STRlat[1,im-1,:] = intercept + (slope * yrs)
 
     slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRslp[0,im-1,:])
-    STRslp[0,im-1,:] = intercept + (slope * yrs)
+    STRslp[1,im-1,:] = intercept + (slope * yrs)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Plotting
