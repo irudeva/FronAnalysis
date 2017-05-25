@@ -269,6 +269,12 @@ for im in range( 1,13):
     slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,nfr_my3tr[0,im-1,:])
     nfr_my3tr[1,im-1,:] = intercept + (slope * yrs)
 
+    slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,fr_northlat_my[0,im-1,:])
+    fr_northlat_my[1,im-1,:] = intercept + (slope * yrs)
+
+    slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,fr_northlat_my3tr[0,im-1,:])
+    fr_northlat_my3tr[1,im-1,:] = intercept + (slope * yrs)
+
     slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRlat[0,im-1,:])
     STRlat[1,im-1,:] = intercept + (slope * yrs)
 
@@ -342,6 +348,8 @@ for ifig in np.arange(4,5):
             im = ir+ic*6
             a = ax[ir, ic]
             a2 = a.twinx()
+
+            print var1
 
             a.plot(yrs,var1[0,im,:],color='b',lw=1,label=var1legend)
             a2.plot(yrs,var2[0,im,:],color='g',lw=1,label=var2legend)
