@@ -28,14 +28,14 @@ nf1 = 0# 5518 ;0
 nf2 = 20000# 5518 ;20000
 
 hs = "SH"
-# reg
-# lon = [ -90,361]
-# lat = [ -40,-20]
-# reg = "20_40S"
-
-lon = [ 0,150]
+reg
+lon = [ -90,361]
 lat = [ -40,-20]
-reg = "0_150E.20_40S"
+reg = "20_40S"
+
+# lon = [ 0,150]
+# lat = [ -40,-20]
+# reg = "0_150E.20_40S"
 
 
 maxnf = 200 # max # of fronts per timestep
@@ -287,7 +287,7 @@ for im in range( 1,13):
 # Plotting
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 plt.close('all')
-for ifig in np.arange(4,8):
+for ifig in np.arange(0,8):
     # fig = plt.figure(ifig)
     f, ax = plt.subplots(6, 2,  sharex='col', sharey='row')
 
