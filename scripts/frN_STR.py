@@ -220,6 +220,7 @@ for yr in yrs:
                                       fr_northlat[yr-year[0],nt-tfr1,ifr] = np.amax(flat[nt,ifr,:npts[nt,ifr]])
                                     #   print yr-year[0],nt-tfr1,ifr, "   ",im,month_abbr[im], frmask[yr-year[0],nt-tfr1,ifr]
                                     #   print np.sum(frmask==im)
+                                      print fr_northlat[yr-year[0],nt-tfr1,ifr]
                                       break
 
 
@@ -255,7 +256,7 @@ for yr in yrs:
         tmp1 = fr_northlat[yr-year[0],:,:][np.where(frmask[yr-year[0],:,:] == im)]
         fr_northlat_my3tr[0,im-1,yr-year[0]]=np.mean(tmp1[np.where(tmp>=dvcrit[im-1])])
         # nfr_my3tr[im-1,yr-year[0]]=np.sum(frmask[yr-year[0],:,:]==im and frdv[yr-year[0],:,:]>=dvcrit[im-1])
-        # print yr, im, month_abbr[im], nfr_my[0,im-1,yr-year[0]],nfr_my3tr[0,im-1,yr-year[0]]
+        print yr, im, month_abbr[im], fr_northlat_my[0,im-1,yr-year[0]],fr_northlat_my3tr[0,im-1,yr-year[0]]
         # print np.count_nonzero(np.where(frmask[yr-year[0],:,:]== im, 1,0))
 
 # ************************************************
