@@ -72,10 +72,10 @@ do yr = year(0),year(1)
     avslp = dim_avg_n_Wrap(slp1(:,:,ind(lonslp.ge.lon(0).and.lonslp.le.lon(1))),2)
   end do
   ;for STR2
-  maxmeridslp = new((/dimsizes(timeslp),dimsizes(lonslp)/),float)
-  do ilon = 0,dimsizes(lonslp)
-    maxmeridslp(:,ilon) = max(slp1(:,ind(latslp.lt.0.and.latslp.gt.-80),ilon)
-  end do
+  ; maxmeridslp = new((/dimsizes(timeslp),dimsizes(lonslp)/),float)
+  ; do ilon = 0,dimsizes(lonslp)
+  ;   maxmeridslp(:,ilon) = max(slp1(:,ind(latslp.lt.0.and.latslp.gt.-80),ilon)
+  ; end do
 
 
   ; do im = 1,12
@@ -113,7 +113,7 @@ do yr = year(0),year(1)
   delete(avslp)
   delete(timeslp)
   delete(dateslp)
-  delete(maxmeridslp)
+  ; delete(maxmeridslp)
 
 end do
 
@@ -183,7 +183,7 @@ do yr = year(0),year(1)
   if(yr .eq. year(0))then
    if(isleapyear(yr))then
     ;  frmask = new((/dimsizes(yrs),tfr2-ntfr1+1,maxnf,maxnp/),integer)
-     frmask = new((/dimsizes(yrs),tfr2-ntfr1+1,maxnf/),integer)
+     frmask = new((/dimsizes(yrs),tfr2-tfr1+1,maxnf/),integer)
      frdv  = new((/dimsizes(yrs),tfr2-tfr1+1,maxnf/),float)
    else
     frmask = new((/dimsizes(yrs),tfr2-tfr1+5,maxnf/),integer)
@@ -221,8 +221,8 @@ do yr = year(0),year(1)
     ;    if (datefr(nt,3).ge.hr(0).and.datefr(nt,3).le.hr(1))then
 
         ; if (ssn.eq."YYY".or.tssn.eq.ssn)then
-      do im = 1,12
-       if (datefr(nt,1).ge.im.and.datefr(nt,1).le.mm(1))then
+      ; do im = 1,12
+      ;  if (datefr(nt,1).ge.mm[0].and.datefr(nt,1).le.mm(1))then
          do ifr = 0,nf(nt)-1
            ;print(ifr+" "+nf(nt))
 
@@ -234,7 +234,7 @@ do yr = year(0),year(1)
               ;print(yr+" "+year(0)+" "+nt+" "+ifr+" "+np)
 
               ; for all fronts that had at least one point in the region
-              frmask(yr-year(0),nt-tfr1,ifr) = im
+              frmask(yr-year(0),nt-tfr1,ifr) = datefr(nt,1)
               frdv (yr-year(0),nt-tfr1,ifr) = avg(dv(nt,ifr,:npts(nt,ifr)-1))
               break
 
@@ -250,8 +250,8 @@ do yr = year(0),year(1)
           end if   ;fr1/fr2
 
          end do  ; nf
-       end if
-      end do
+      ;  end if
+      ; end do
 
         ; end if  ; ssn
 
