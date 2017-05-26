@@ -29,13 +29,14 @@ nf2 = 20000# 5518 ;20000
 
 hs = "SH"
 # reg
-lon = [ -90,361]
-lat = [ -40,-20]
-reg = "20_40S"
 
-# lon = [ 0,150]
+# lon = [ -90,361]
 # lat = [ -40,-20]
-# reg = "0_150E.20_40S"
+# reg = "20_40S"
+
+lon = [ 210,285]
+lat = [ -40,-20]
+reg = "210_285.20_40S"
 
 
 maxnf = 200 # max # of fronts per timestep
@@ -363,7 +364,7 @@ for ifig in np.arange(0,8):
             a.plot(yrs,var1[0,im,:],color='b',lw=1,label=var1legend)
             a2.plot(yrs,var2[0,im,:],color='g',lw=1,label=var2legend)
             # ax[ir, ic].set_title('STR intensity, %s, SH'%month_abbr[ir+ic*6+1])
-            a.axis((year[0]-1, year[1], yax1[0], yax1[1]))
+            # a.axis((year[0]-1, year[1], yax1[0], yax1[1]))
             a2.axis((year[0]-1, year[1], yax2[0], yax2[1]))
 
             if im == 3:
