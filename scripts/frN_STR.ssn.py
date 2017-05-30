@@ -5,42 +5,45 @@ import calendar
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 from scipy import stats
-import xlwt,xlrd
-from xlutils.copy import copy
-import os
+import xlwt
 
 # ************************************************
 #  Excel
 # ************************************************
 
-def output(ireg,reg,filename, sheet, month_abbr, cc):
-    if os.path.exists(filename):
-        rb = xlrd.open_workbook(filename, formatting_info=True)
-        sheets = rb.sheet_names()
-        wb = copy(rb)
-        if sheet in sheets:
-            # r_sheet = rb.sheet_by_name(sheet)
-            # print r_sheet
-            sh = wb.get_sheet(sheets.index(sheet))
-        else:
-            sh = wb.add_sheet(sheet)
-            for im in np.arange(1,12+1):
-                sh.write(im,ireg+0,month_abbr[im])
+def output(filename, sheet, list1, list2, x, y, z):
+    book = xlwt.Workbook()
+    sh = book.add_sheet(sheet)
 
-    else:
-        wb = xlwt.Workbook()
-        sh = wb.add_sheet(sheet)
-        for im in np.arange(1,12+1):
-            sh.write(im,ireg+0,month_abbr[im])
+    variables = [x, y, z]
+    x_desc = 'Display'
+    y_desc = 'Dominance'
+    z_desc = 'Test'
+    desc = [x_desc, y_desc, z_desc]
+
+    col1_name = 'Stimulus Time'
+    col2_name = 'Reaction Time'
+
+    #You may need to group the variables together
+    #for n, (v_desc, v) in enumerate(zip(desc, variables)):
+    for n, v_desc, v in enumerate(zip(desc, variables)):
+        sh.write(n, 0, v_desc)
+        sh.write(n, 1, v)
+
+    n+=1
+
+    sh.write(n, 0, col1_name)
+    sh.write(n, 1, col2_name)
+
+    for m, e1 in enumerate(list1, n+1):
+        sh.write(m, 0, e1)
+
+    for m, e2 in enumerate(list2, n+1):
+        sh.write(m, 1, e2)
+
+    book.save(filename)
 
 
-    sh.write(0,ireg+1,reg)
-
-    for im in np.arange(1,12+1):
-        # sh.write(im,ireg+0,month_abbr[im])
-        sh.write(im,ireg+1,cc[im-1])
-
-    wb.save(filename)
 
 # ************************************************
 #  Selection
@@ -49,7 +52,7 @@ month_abbr = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
                     "Oct","Nov","Dec"]
 
 # time
-year = [1979,1984]
+year = [1979,2016]
 yrs = np.arange(year[0],year[1],1)
 nyrs = np.size(yrs)
 x = np.arange(0,nyrs-1,1)
@@ -59,7 +62,7 @@ dd = [1,31]
 hr = [0,18]
 
 # ssn   / use "YYY" for whole year
-# ssn="YYY"
+ssn=["YYY","DJF","MAM","JJA","SON"]
 
 # nf
 nf1 = 0# 5518 ;0
@@ -67,13 +70,8 @@ nf2 = 20000# 5518 ;20000
 
 hs = "SH"
 # reg
-nreg = 5
 
-nfig = 8  # possible combinations of vars
-cc = np.zeros((nreg+1,nfig+1,2,12),dtype=np.float) # correlation
-
-
-for ireg in np.arange(nreg+1):
+for ireg in np.arange(5):
     if ireg == 0:
         lon = [ -90,361]
         lat = [ -40,-20]
@@ -362,37 +360,37 @@ for ireg in np.arange(nreg+1):
 
 
     plt.close('all')
-    for ifig in np.arange(8,nfig+1):
+    for ifig in np.arange(8,9):
         # fig = plt.figure(ifig)
         f, ax = plt.subplots(6, 2,  sharex='col', sharey='row')
 
         if ifig ==0:
             plt.suptitle('STR intensity vs number of fronts, %s'%reg,fontsize=14)
-            fout = "frN_STRint"
+            fout = "../output/frN_STRint.%s.png"%reg
         if ifig ==1:
             plt.suptitle('STR intensity vs number of strong fronts, %s'%reg,fontsize=14)
-            fout = "frNstr_STRint"
+            fout = "../output/frNstr_STRint.%s.png"%reg
         if ifig ==2:
             plt.suptitle('STR location vs number of fronts, %s'%reg,fontsize=14)
-            fout = "frN_STRloc"
+            fout = "../output/frN_STRloc.%s.png"%reg
         if ifig ==3:
             plt.suptitle('STR location vs number of strong fronts, %s'%reg,fontsize=14)
-            fout = "frNstr_STRloc"
+            fout = "../output/frNstr_STRloc.%s.png"%reg
         if ifig ==4:
             plt.suptitle('STR intensity vs north lat of fronts, %s'%reg,fontsize=14)
-            fout = "frNorthLat_STRint"
+            fout = "../output/frNorthLat_STRint.%s.png"%reg
         if ifig ==5:
             plt.suptitle('STR intensity vs north lat of strong fronts, %s'%reg,fontsize=14)
-            fout = "frNorthLatstr_STRint"
+            fout = "../output/frNorthLatstr_STRint.%s.png"%reg
         if ifig ==6:
             plt.suptitle('STR location vs north lat of fronts, %s'%reg,fontsize=14)
-            fout = "frNorthLat_STRloc"
+            fout = "../output/frNorthLat_STRloc.%s.png"%reg
         if ifig ==7:
             plt.suptitle('STR location vs north lat of strong fronts, %s'%reg,fontsize=14)
-            fout = "frNorthLatstr_STRloc"
+            fout = "../output/frNorthLatstr_STRloc.%s.png"%reg
         if ifig ==8:
             plt.suptitle('STR intensity vs location, %s'%reg,fontsize=14)
-            fout = "STRloc_STRlat"
+            fout = "../output/STRloc_STRlat.%s.png"%reg
 
         if ifig ==0 or ifig == 2:
             var1 = nfr_my
@@ -481,12 +479,9 @@ for ireg in np.arange(nreg+1):
                 a.plot(yrs,var1[1,im,:],color='b',lw=2)
                 a2.plot(yrs,var2[1,im,:],color='g',lw=2)
 
-                cctmp = np.corrcoef(var1[0,im,:],var2[0,im,:])
-                cc[ireg,ifig,0,im] = cctmp[1,0]
-                cctmp = np.corrcoef(var1[0,im,:]-var1[1,im,:],var2[0,im,:]-var2[1,im,:])
-                cc[ireg,ifig,1,im] = cctmp[1,0]
-
-                a.set_title(' %s, %s, r = %.2f, r_dt = %.2f'%(month_abbr[ir+ic*6+1],reg,cc[ireg,ifig,0,im],cc[ireg,ifig,1,im]))
+                cc = np.corrcoef(var1[0,im,:],var2[0,im,:])
+                cc_dt = np.corrcoef(var1[0,im,:]-var1[1,im,:],var2[0,im,:]-var2[1,im,:])
+                a.set_title(' %s, %s, r = %.2f, r_dt = %.2f'%(month_abbr[ir+ic*6+1],reg,cc[1,0],cc_dt[1,0]))
 
                 if im==11:
                     # ask matplotlib for the plotted objects and their labels
@@ -506,14 +501,4 @@ for ireg in np.arange(nreg+1):
         f.subplots_adjust(hspace=0.3)
 
         plt.show()
-        f.savefig("../output/%s.%s.png"%(fout,reg))
-
-        # ************************************************
-        #  correlations to Excel
-        # ************************************************
-        fxls = "../output/%s.xls"%(fout)
-        if ireg == 0 and os.path.exists(fxls):
-                os.remove(fxls)
-
-        output(ireg,reg,fxls, "corr", month_abbr, cc[ireg,ifig,0,:])
-        output(ireg,reg,fxls, "corr_dt", month_abbr, cc[ireg,ifig,1,:])
+        f.savefig(fout)
