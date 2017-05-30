@@ -155,7 +155,7 @@ for ireg in np.arange(5):
       slp_z = np.mean(mslpSH[:,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=2)
 
       if yr==year[0]:
-          STRslp = np.zeros((2,12,nyrs),dtype=np.float)
+          STRslp = np.zeros((2,5,nyrs),dtype=np.float)
           STRlat = np.zeros_like(STRslp)
 
       for im in np.arange(slp_z[:,0].size):
@@ -206,7 +206,7 @@ for ireg in np.arange(5):
     #         # ax2.plot(t, s2, 'r.')
     #         # ax2.set_ylabel('sin', color='r')
     #
-    #         if im==12:
+    #         if im==5:
     #             ax[ir, ic].legend(loc='lower right')
     #
     # plt.setp([a.set_xlabel('Year') for a in ax[5, :]])
@@ -294,8 +294,8 @@ for ireg in np.arange(5):
     # # front stats
     # # ************************************************
     #
-    # dvcrit = np.zeros(12,dtype = np.float)
-    # nfr_my    = np.zeros([ 2,12,nyrs],dtype=np.float)
+    # dvcrit = np.zeros(5,dtype = np.float)
+    # nfr_my    = np.zeros([ 2,5,nyrs],dtype=np.float)
     # nfr_my3tr = np.zeros_like(nfr_my)
     # fr_northlat_my = np.zeros_like(nfr_my)
     # fr_northlat_my3tr = np.zeros_like(nfr_my)
