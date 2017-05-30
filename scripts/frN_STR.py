@@ -13,8 +13,8 @@ import os
 #  Excel
 # ************************************************
 
-def output(ireg,reg,filename, sheet, month_abbr, cc):
-    pad = 12+3
+def output(ireg,reg,filename, sheet, title,month_abbr, cc):
+    pad = 12+4
 
     if os.path.exists(filename):
         rb = xlrd.open_workbook(filename, formatting_info=True)
@@ -27,28 +27,35 @@ def output(ireg,reg,filename, sheet, month_abbr, cc):
         else:
             sh = wb.add_sheet(sheet)
             for im in np.arange(1,12+1):
-                sh.write(im,0,month_abbr[im])
+                sh.write(im+1,0,month_abbr[im])
                 sh.write(pad+im,0,month_abbr[im])
+            sh.write(0,0,title)
+            sh.write(1,0,"corr")
+            sh.write(pad,0,"corr_dt")
 
     else:
         wb = xlwt.Workbook()
         sh = wb.add_sheet(sheet)
         for im in np.arange(1,12+1):
-            sh.write(im,0,month_abbr[im])
+            sh.write(im+1,0,month_abbr[im])
             sh.write(pad+im,0,month_abbr[im])
+        sh.write(0,0,title)
+        sh.write(1,0,"corr")
+        sh.write(pad,0,"corr_dt")
 
 
-    sh.write(0,ireg+1,reg)
+    sh.write(1,ireg+1,reg)
+    sh.write(pad,ireg+1,reg)
 
     for im in np.arange(1,12+1):
         # sh.write(im,ireg+0,month_abbr[im])
-        sh.write(im,ireg+1,cc[0,im-1])
+        sh.write(im+1,ireg+1,cc[0,im-1])
         sh.write(pad+im,ireg+1,cc[1,im-1])
 
     wb.save(filename)
 
-def output_trend(ireg,reg,filename, sheet, month_abbr, trend):
-    pad = 12+3
+def output_trend(ireg,reg,filename, sheet, title,month_abbr, trend):
+    pad = 12+4
 
     if os.path.exists(filename):
         rb = xlrd.open_workbook(filename, formatting_info=True)
@@ -61,24 +68,31 @@ def output_trend(ireg,reg,filename, sheet, month_abbr, trend):
         else:
             sh = wb.add_sheet(sheet)
             for im in np.arange(1,12+1):
-                sh.write(im,0,month_abbr[im])
+                sh.write(im+1,0,month_abbr[im])
                 sh.write(pad+im,0,month_abbr[im])
+            sh.write(0,0,title)
+            sh.write(1,0,"slope")
+            sh.write(pad,0,"p value")
 
     else:
         wb = xlwt.Workbook()
         sh = wb.add_sheet(sheet)
         for im in np.arange(1,12+1):
-            sh.write(im,0,month_abbr[im])
+            sh.write(im+1,0,month_abbr[im])
             sh.write(pad+im,0,month_abbr[im])
+        sh.write(0,0,title)
+        sh.write(1,0,"slope")
+        sh.write(pad,0,"p value")
 
 
-    sh.write(0,ireg+1,reg)
+    sh.write(1,ireg+1,reg)
+    sh.write(pad,ireg+1,reg)
 
     for im in np.arange(1,12+1):
         # sh.write(im,ireg+0,month_abbr[im])
-        sh.write(im,ireg+1,trend[0,im-1])
-        if trend[1,im-1] > .95:
-            sh.write(pad+im,ireg+1,trend[0,im-1])
+        sh.write(im+1,ireg+1,trend[0,im-1])
+        # if trend[1,im-1] < .05:
+        sh.write(pad+im,ireg+1,trend[1,im-1])
 
     wb.save(filename)
 
@@ -91,7 +105,7 @@ month_abbr = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
                     "Oct","Nov","Dec"]
 
 # time
-year = [1979,1984]
+year = [1979,2016]
 yrs = np.arange(year[0],year[1],1)
 nyrs = np.size(yrs)
 x = np.arange(0,nyrs-1,1)
@@ -111,7 +125,9 @@ hs = "SH"
 # reg
 nreg = 5
 
-nfig = 8  # possible combinations of vars
+nfig = 10  # possible combinations of vars
+fig1 = 8
+fig2 = 10
 cc = np.zeros((nreg+1,nfig+1,2,12),dtype=np.float) # correlation
 
 
@@ -199,17 +215,27 @@ for ireg in np.arange(nreg+1):
       slp_z = np.mean(mslpSH[:,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=2)
 
       if yr==year[0]:
-          STRslp = np.zeros((2,12,nyrs),dtype=np.float)
-          STRlat = np.zeros_like(STRslp)
+          STR1slp = np.zeros((2,12,nyrs),dtype=np.float)
+          STR1lat = np.zeros_like(STR1slp)
+          STR1slp_tr = np.zeros((2,12),dtype=np.float)
+          STR1lat_tr = np.zeros_like(STR1slp_tr)
+
+          STR2slp = np.zeros_like(STR1slp)
+          STR2lat = np.zeros_like(STR2slp)
+          STR2slp_tr = np.zeros_like(STR1slp_tr)
+          STR2lat_tr = np.zeros_like(STR1slp_tr)
+
 
       for im in np.arange(slp_z[:,0].size):
         #   print dt_nc[im].month
-          STRslp[0,im,yr-year[0]] = np.amax(slp_z[im,:])
-          STRlat[0,im,yr-year[0]] = latslpSH[np.argmax(slp_z[im,:])]
-        #   print STRlat[im,yr-year[0]], STRslp[im,yr-year[0]]
+          STR1slp[0,im,yr-year[0]] = np.amax(slp_z[im,:])
+          STR1lat[0,im,yr-year[0]] = latslpSH[np.argmax(slp_z[im,:])]
+        #   print STR1lat[im,yr-year[0]], STR1slp[im,yr-year[0]]
+
+          STR2slp[0,im,yr-year[0]] = np.mean(np.amax(mslpSH[im,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1))
+          STR2lat[0,im,yr-year[0]] = np.mean(latslpSH[np.argmax(mslpSH[im,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1)])
 
       nc.close()
-
 
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #  Plotting
@@ -217,16 +243,16 @@ for ireg in np.arange(nreg+1):
     # plt.close('all')
     #
     # f, ax = plt.subplots(6, 2,  sharex='col', sharey='row')
-    # plt.suptitle('STR intensity, SH',fontsize=14)
+    # plt.suptitle('STR1 intensity, SH',fontsize=14)
     # for ic in np.arange(2):
     #     for ir in np.arange(6):
     #         im = ir+ic*6
     #         a = ax[ir, ic]
     #         a2 = a.twinx()
     #
-    #         a.plot(yrs,STRslp[im,:],color='b',lw=1,label='STR intensity')
-    #         a2.plot(yrs,STRlat[im,:],color='g',lw=1,label='STR location')
-    #         # ax[ir, ic].set_title('STR intensity, %s, SH'%month_abbr[ir+ic*6+1])
+    #         a.plot(yrs,STR1slp[im,:],color='b',lw=1,label='STR1 intensity')
+    #         a2.plot(yrs,STR1lat[im,:],color='g',lw=1,label='STR1 location')
+    #         # ax[ir, ic].set_title('STR1 intensity, %s, SH'%month_abbr[ir+ic*6+1])
     #         a.axis((year[0]-1, year[1], 1010, 1025))
     #         a2.axis((year[0]-1, year[1], -40, -25))
     #
@@ -236,11 +262,11 @@ for ireg in np.arange(nreg+1):
     #             a2.set_ylabel('latitude',color='g')
     #
     #         #  trend
-    #         slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRslp[im,:])
+    #         slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STR1slp[im,:])
     #         trend = intercept + (slope * yrs)
     #         a.plot(yrs,trend,color='b',lw=2)
     #
-    #         slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRlat[im,:])
+    #         slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STR1lat[im,:])
     #         trend = intercept + (slope * yrs)
     #         a2.plot(yrs,trend,color='g',lw=2)
     #
@@ -312,7 +338,7 @@ for ireg in np.arange(nreg+1):
     #       else:
     #           frmask = np.zeros((nyrs,tfr2-tfr1+5,maxnf),dtype=np.int)
     #           frdv   = np.zeros((nyrs,tfr2-tfr1+5,maxnf),dtype=np.float32)
-    #       fr_northlat = np.zeros_like(frdv)
+    #       frNPlat = np.zeros_like(frdv)
     #
     #
     #   for nt in np.arange(tfr1,tfr2+1):
@@ -327,7 +353,7 @@ for ireg in np.arange(nreg+1):
     #                                   if flon[nt,ifr,ip]>=lon[0] and flon[nt,ifr,ip]<=lon[1]:
     #                                       frmask[yr-year[0],nt-tfr1,ifr] = fdt[nt].month
     #                                       frdv[yr-year[0],nt-tfr1,ifr] = np.mean(dv[nt,ifr,:npts[nt,ifr]])
-    #                                       fr_northlat[yr-year[0],nt-tfr1,ifr] = np.amax(flat[nt,ifr,:npts[nt,ifr]])
+    #                                       frNPlat[yr-year[0],nt-tfr1,ifr] = np.amax(flat[nt,ifr,:npts[nt,ifr]])
     #                                     #   print yr-year[0],nt-tfr1,ifr, "   ",im,month_abbr[im], frmask[yr-year[0],nt-tfr1,ifr]
     #                                     #   print np.sum(frmask==im)
     #                                       break
@@ -341,8 +367,13 @@ for ireg in np.arange(nreg+1):
     # dvcrit = np.zeros(12,dtype = np.float)
     # nfr_my    = np.zeros([ 2,12,nyrs],dtype=np.float)
     # nfr_my3tr = np.zeros_like(nfr_my)
-    # fr_northlat_my = np.zeros_like(nfr_my)
-    # fr_northlat_my3tr = np.zeros_like(nfr_my)
+    # frNPlat_my = np.zeros_like(nfr_my)
+    # frNPlat_my3tr = np.zeros_like(nfr_my)
+    #
+    # nfr_my_tr   = np.zeros([ 2,12],dtype=np.float)
+    # nfr_my3tr_tr = np.zeros_like(nfr_my_tr)
+    # frNPlat_my_tr= np.zeros_like(nfr_my_tr)
+    # frNPlat_my3tr_tr = np.zeros_like(nfr_my_tr)
     #
     # for im in range( 1,13):
     #
@@ -360,14 +391,14 @@ for ireg in np.arange(nreg+1):
     #     for im in range( 1,13):
     #         nfr_my[0,im-1,yr-year[0]]=np.sum(frmask[yr-year[0],:,:]==im)
     #
-    #         tmp0 = fr_northlat[yr-year[0],:,:][np.where(frmask[yr-year[0],:,:] == im)]
-    #         fr_northlat_my[0,im-1,yr-year[0]]=np.mean(tmp0)
+    #         tmp0 = frNPlat[yr-year[0],:,:][np.where(frmask[yr-year[0],:,:] == im)]
+    #         frNPlat_my[0,im-1,yr-year[0]]=np.mean(tmp0)
     #
     #         tmp  = frdv[yr-year[0],:,:][np.where(frmask[yr-year[0],:,:] == im)]
     #         nfr_my3tr[0,im-1,yr-year[0]]=np.count_nonzero(np.where(tmp>=dvcrit[im-1], 1,0))
-    #         fr_northlat_my3tr[0,im-1,yr-year[0]]=np.mean(tmp0[np.where(tmp>=dvcrit[im-1])])
+    #         frNPlat_my3tr[0,im-1,yr-year[0]]=np.mean(tmp0[np.where(tmp>=dvcrit[im-1])])
     #         # nfr_my3tr[im-1,yr-year[0]]=np.sum(frmask[yr-year[0],:,:]==im and frdv[yr-year[0],:,:]>=dvcrit[im-1])
-    #         # print yr, im, month_abbr[im], fr_northlat_my[0,im-1,yr-year[0]],fr_northlat_my3tr[0,im-1,yr-year[0]]
+    #         # print yr, im, month_abbr[im], frNPlat_my[0,im-1,yr-year[0]],frNPlat_my3tr[0,im-1,yr-year[0]]
     #         # print np.count_nonzero(np.where(frmask[yr-year[0],:,:]== im, 1,0))
 
     # ************************************************
@@ -379,38 +410,57 @@ for ireg in np.arange(nreg+1):
         # nfr_my[1,im-1,:] = intercept + (slope * yrs)
         # nfr_my_tr[0,im-1] = slope
         # nfr_my_tr[1,im-1] = p_value
-        # output_trend(ireg,reg,"../output/nfr.xls", "trend", month_abbr, nfr_my_tr)
+        # title = "Trends in N of fronts"
+        # output_trend(ireg,reg,"../output/trend.Nfr.%d_%d.xls"%(year[0],year[1]-1), "trend",title, month_abbr, nfr_my_tr)
         #
         # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,nfr_my3tr[0,im-1,:])
         # nfr_my3tr[1,im-1,:] = intercept + (slope * yrs)
-        # nfr_m3try[2,im-1,0] = slope
-        # nfr_m3try[3,im-1,0] = p_value
-        # output_trend(ireg,reg,"../output/nfr3tr.xls", "trend", month_abbr, nfr_my_tr)
+        # nfr_m3try_tr[0,im-1] = slope
+        # nfr_m3try_tr[1,im-1] = p_value
+        # title = "Trends in N of STRONG fronts "
+        # output_trend(ireg,reg,"../output/ntrend.Nfrstr.%d_%d.xls"%(year[0],year[1]-1), "trend", title,month_abbr, nfr_my3tr_tr)
         #
-        # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,fr_northlat_my[0,im-1,:])
-        # fr_northlat_my[1,im-1,:] = intercept + (slope * yrs)
-        # fr_northlat_my[2,im-1,0] = slope
-        # fr_northlat_my[3,im-1,0] = p_value
-        # output_trend(ireg,reg,"../output/frNPlat.xls", "trend", month_abbr, nfr_my_tr)
+        # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,frNPlat_my[0,im-1,:])
+        # frNPlat_my[1,im-1,:] = intercept + (slope * yrs)
+        # frNPlat_my_tr[0,im-1] = slope
+        # frNPlat_my_tr[1,im-1] = p_value
+        # title = "Trends in frontal NP lat"
+        # output_trend(ireg,reg,"../output/trend.frNPlat.%d_%d.xls"%(year[0],year[1]-1), "trend", title,month_abbr, frNPlat_my_tr)
         #
-        # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,fr_northlat_my3tr[0,im-1,:])
-        # fr_northlat_my3tr[1,im-1,:] = intercept + (slope * yrs)
-        # fr_northlat_my3tr[2,im-1,0] = slope
-        # fr_northlat_my3tr[3,im-1,0] = p_value
-        # output_trend(ireg,reg,"../output/frNPlat3tr.xls", "trend", month_abbr, nfr_my_tr)
+        # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,frNPlat_my3tr[0,im-1,:])
+        # frNPlat_my3tr[1,im-1,:] = intercept + (slope * yrs)
+        # frNPlat_my3tr_tr[0,im-1] = slope
+        # frNPlat_my3tr_tr[1,im-1] = p_value
+        # title = "Trends in STRONG fronts NP lat"
+        # output_trend(ireg,reg,"../output/trend.frNPlat_str.%d_%d.xls"%(year[0],year[1]-1), "trend", title, month_abbr, frNPlat_my3tr_tr)
 
-        slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRlat[0,im-1,:])
-        STRlat[1,im-1,:] = intercept + (slope * yrs)
-        STRlat[2,im-1,0] = slope
-        STRlat[3,im-1,0] = p_value
-        # output_trend(ireg,reg,"../output/STR1loc.xls", "trend", month_abbr, STRlat)
+        slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STR1lat[0,im-1,:])
+        STR1lat[1,im-1,:] = intercept + (slope * yrs)
+        STR1lat_tr[0,im-1] = slope
+        STR1lat_tr[1,im-1] = p_value
+        title = "Trends in STR1 location"
+        output_trend(ireg,reg,"../output/trend.STR1loc.%d_%d.xls"%(year[0],year[1]-1), "trend", title,month_abbr, STR1lat_tr)
 
-        slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRslp[0,im-1,:])
-        STRslp[1,im-1,:] = intercept + (slope * yrs)
-        STRslp[2,im-1,0] = slope
-        STRslp[3,im-1,0] = p_value
-        # output_trend(ireg,reg,"../output/STR1slp.xls", "trend", month_abbr, STRslp)
+        slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STR1slp[0,im-1,:])
+        STR1slp[1,im-1,:] = intercept + (slope * yrs)
+        STR1slp_tr[0,im-1] = slope
+        STR1slp_tr[1,im-1] = p_value
+        title = "Trends in STR1 intensity"
+        output_trend(ireg,reg,"../output/trend.STR1int.%d_%d.xls"%(year[0],year[1]-1), "trend", title,month_abbr, STR1slp_tr)
 
+        slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STR2lat[0,im-1,:])
+        STR2lat[1,im-1,:] = intercept + (slope * yrs)
+        STR2lat_tr[0,im-1] = slope
+        STR2lat_tr[1,im-1] = p_value
+        title = "Trends in STR2 location"
+        output_trend(ireg,reg,"../output/trend.STR2loc.%d_%d.xls"%(year[0],year[1]-1), "trend",title, month_abbr, STR2lat_tr)
+
+        slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STR2slp[0,im-1,:])
+        STR2slp[1,im-1,:] = intercept + (slope * yrs)
+        STR2slp_tr[0,im-1] = slope
+        STR2slp_tr[1,im-1] = p_value
+        title = "Trends in STR2 intensity"
+        output_trend(ireg,reg,"../output/trend.STR2int.%d_%d.xls"%(year[0],year[1]-1), "trend", title,month_abbr, STR2slp_tr)
 
 
     #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -422,39 +472,46 @@ for ireg in np.arange(nreg+1):
     minorLocator = MultipleLocator(1)
 
 
-
+    # plt.ion()
     plt.close('all')
-    for ifig in np.arange(8,nfig+1):
+    for ifig in np.arange(fig1,fig2+1):
         # fig = plt.figure(ifig)
-        f, ax = plt.subplots(6, 2,  sharex='col', sharey='row')
+        f, ax = plt.subplots(6, 2,  sharex='col', sharey='row',figsize=(3.5*3.13,4.2*3.13))
 
         if ifig ==0:
-            plt.suptitle('STR intensity vs number of fronts, %s'%reg,fontsize=14)
+            title = 'STR intensity vs number of fronts, %s'%reg
             fout = "frN_STRint"
         if ifig ==1:
-            plt.suptitle('STR intensity vs number of strong fronts, %s'%reg,fontsize=14)
+            title = 'STR intensity vs number of strong fronts, %s'%reg
             fout = "frNstr_STRint"
         if ifig ==2:
-            plt.suptitle('STR location vs number of fronts, %s'%reg,fontsize=14)
+            title = 'STR location vs number of fronts, %s'%reg
             fout = "frN_STRloc"
         if ifig ==3:
-            plt.suptitle('STR location vs number of strong fronts, %s'%reg,fontsize=14)
+            title = 'STR location vs number of strong fronts, %s'%reg
             fout = "frNstr_STRloc"
         if ifig ==4:
-            plt.suptitle('STR intensity vs north lat of fronts, %s'%reg,fontsize=14)
+            title = 'STR intensity vs north lat of fronts, %s'%reg
             fout = "frNorthLat_STRint"
         if ifig ==5:
-            plt.suptitle('STR intensity vs north lat of strong fronts, %s'%reg,fontsize=14)
+            title = 'STR intensity vs north lat of strong fronts, %s'%reg
             fout = "frNorthLatstr_STRint"
         if ifig ==6:
-            plt.suptitle('STR location vs north lat of fronts, %s'%reg,fontsize=14)
+            title = 'STR location vs north lat of fronts, %s'%reg
             fout = "frNorthLat_STRloc"
         if ifig ==7:
-            plt.suptitle('STR location vs north lat of strong fronts, %s'%reg,fontsize=14)
+            title = 'STR location vs north lat of strong fronts, %s'%reg
             fout = "frNorthLatstr_STRloc"
         if ifig ==8:
-            plt.suptitle('STR intensity vs location, %s'%reg,fontsize=14)
-            fout = "STRloc_STRlat"
+            title = 'STR1 intensity vs location, %s'%reg
+            fout = "STR1int_STR1loc"
+        if ifig ==9:
+            title = 'STR1 intensity vs STR2 intensity, %s'%reg
+            fout = "STR1int_STR2int"
+        if ifig ==10:
+            title = 'STR1 location vs STR2 location, %s'%reg
+            fout = "STR1loc_STR2loc"
+        plt.suptitle(title,fontsize=14)
 
         if ifig ==0 or ifig == 2:
             var1 = nfr_my
@@ -469,40 +526,57 @@ for ireg in np.arange(nreg+1):
             var1legend = 'N of strong fronts (int > 67th perc)'
 
         if any ([4,6] == ifig ):
-            var1 = fr_northlat_my
+            var1 = frNPlat_my
             yax1 = [-40, -25]
             yax1label = 'latitude'
             var1legend = 'front lat north'
 
         if any ([5,7] == ifig ):
-            var1 = fr_northlat_my3tr
+            var1 = frNPlat_my3tr
             yax1 = [-40, -25]
             yax1label = 'latitude'
             var1legend = 'strong front lat north'
 
         if any ([0,1,4,5] == ifig ):
-            var2 = STRslp
+            var2 = STR1slp
             yax2 = [1010, 1025]
             yax2label = 'MSL Pressure (Pa)'
             var2legend = 'STR intendity'
 
         if any ([0,1,4,5] == ifig ):
-            var2 = STRslp
+            var2 = STR1slp
             yax2 = [1010, 1025]
             yax2label = 'MSL Pressure (Pa)'
             var2legend = 'STR intendity'
 
         if any ([2,3,6,7,8] == ifig ):
-            var2 = STRlat
+            var2 = STR1lat
             yax2 = [-40, -25]
             yax2label = 'latitude'
             var2legend = 'STR location'
 
-        if ifig == 8:
-            var1 = STRslp
+        if any ([8,9] == ifig ):
+            var1 = STR1slp
             yax1 = [1010, 1025]
             yax1label = 'MSL Pressure (Pa)'
-            var1legend = 'STR intensity'
+            var1legend = 'STR1 intensity'
+
+        if ifig == 9:
+            var2 = STR2slp
+            yax2 = [1010, 1025]
+            yax2label = 'MSL Pressure (Pa)'
+            var2legend = 'STR2 intensity'
+
+        if ifig == 10:
+            var1 = STR1lat
+            yax1 = [-40, -25]
+            yax1label = 'latitude'
+            var1legend = 'STR1 location'
+
+            var2 = STR2lat
+            yax2 = [-40, -25]
+            yax2label = 'latitude'
+            var2legend = 'STR2 location'
 
 
         for ic in np.arange(2):
@@ -566,15 +640,14 @@ for ireg in np.arange(nreg+1):
 
 
         f.subplots_adjust(hspace=0.3)
-
-        plt.show()
-        f.savefig("../output/%s.%s.png"%(fout,reg))
+        plt.draw()
+        f.savefig("../output/%s.%s.%d_%d.png"%(fout,reg,year[0],year[1]-1))
+        plt.close(f)
 
         # ************************************************
         #  correlations to Excel
         # ************************************************
-        fxls = "../output/%s.xls"%(fout)
+        fxls = "../output/%s.%d_%d.xls"%(fout,year[0],year[1]-1)
         if ireg == 0 and os.path.exists(fxls):
                 os.remove(fxls)
-
-        output(ireg,reg,fxls, "corr", month_abbr, cc[ireg,ifig,:,:])
+        output(ireg,reg,fxls, "corr", title, month_abbr, cc[ireg,ifig,:,:])
