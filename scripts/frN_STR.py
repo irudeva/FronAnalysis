@@ -14,6 +14,8 @@ import os
 # ************************************************
 
 def output(ireg,reg,filename, sheet, month_abbr, cc):
+    pad = 12+3
+
     if os.path.exists(filename):
         rb = xlrd.open_workbook(filename, formatting_info=True)
         sheets = rb.sheet_names()
@@ -25,22 +27,62 @@ def output(ireg,reg,filename, sheet, month_abbr, cc):
         else:
             sh = wb.add_sheet(sheet)
             for im in np.arange(1,12+1):
-                sh.write(im,ireg+0,month_abbr[im])
+                sh.write(im,0,month_abbr[im])
+                sh.write(pad+im,0,month_abbr[im])
 
     else:
         wb = xlwt.Workbook()
         sh = wb.add_sheet(sheet)
         for im in np.arange(1,12+1):
-            sh.write(im,ireg+0,month_abbr[im])
+            sh.write(im,0,month_abbr[im])
+            sh.write(pad+im,0,month_abbr[im])
 
 
     sh.write(0,ireg+1,reg)
 
     for im in np.arange(1,12+1):
         # sh.write(im,ireg+0,month_abbr[im])
-        sh.write(im,ireg+1,cc[im-1])
+        sh.write(im,ireg+1,cc[0,im-1])
+        sh.write(pad+im,ireg+1,cc[1,im-1])
 
     wb.save(filename)
+
+def output_trend(ireg,reg,filename, sheet, month_abbr, trend):
+    pad = 12+3
+
+    if os.path.exists(filename):
+        rb = xlrd.open_workbook(filename, formatting_info=True)
+        sheets = rb.sheet_names()
+        wb = copy(rb)
+        if sheet in sheets:
+            # r_sheet = rb.sheet_by_name(sheet)
+            # print r_sheet
+            sh = wb.get_sheet(sheets.index(sheet))
+        else:
+            sh = wb.add_sheet(sheet)
+            for im in np.arange(1,12+1):
+                sh.write(im,0,month_abbr[im])
+                sh.write(pad+im,0,month_abbr[im])
+
+    else:
+        wb = xlwt.Workbook()
+        sh = wb.add_sheet(sheet)
+        for im in np.arange(1,12+1):
+            sh.write(im,0,month_abbr[im])
+            sh.write(pad+im,0,month_abbr[im])
+
+
+    sh.write(0,ireg+1,reg)
+
+    for im in np.arange(1,12+1):
+        # sh.write(im,ireg+0,month_abbr[im])
+        sh.write(im,ireg+1,trend[0,im-1])
+        if trend[1,im-1] > .95:
+            sh.write(pad+im,ireg+1,trend[0,im-1])
+
+    wb.save(filename)
+
+
 
 # ************************************************
 #  Selection
@@ -335,21 +377,41 @@ for ireg in np.arange(nreg+1):
     for im in range( 1,13):
         # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,nfr_my[0,im-1,:])
         # nfr_my[1,im-1,:] = intercept + (slope * yrs)
+        # nfr_my_tr[0,im-1] = slope
+        # nfr_my_tr[1,im-1] = p_value
+        # output_trend(ireg,reg,"../output/nfr.xls", "trend", month_abbr, nfr_my_tr)
         #
         # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,nfr_my3tr[0,im-1,:])
         # nfr_my3tr[1,im-1,:] = intercept + (slope * yrs)
+        # nfr_m3try[2,im-1,0] = slope
+        # nfr_m3try[3,im-1,0] = p_value
+        # output_trend(ireg,reg,"../output/nfr3tr.xls", "trend", month_abbr, nfr_my_tr)
         #
         # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,fr_northlat_my[0,im-1,:])
         # fr_northlat_my[1,im-1,:] = intercept + (slope * yrs)
+        # fr_northlat_my[2,im-1,0] = slope
+        # fr_northlat_my[3,im-1,0] = p_value
+        # output_trend(ireg,reg,"../output/frNPlat.xls", "trend", month_abbr, nfr_my_tr)
         #
         # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,fr_northlat_my3tr[0,im-1,:])
         # fr_northlat_my3tr[1,im-1,:] = intercept + (slope * yrs)
+        # fr_northlat_my3tr[2,im-1,0] = slope
+        # fr_northlat_my3tr[3,im-1,0] = p_value
+        # output_trend(ireg,reg,"../output/frNPlat3tr.xls", "trend", month_abbr, nfr_my_tr)
 
         slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRlat[0,im-1,:])
         STRlat[1,im-1,:] = intercept + (slope * yrs)
+        STRlat[2,im-1,0] = slope
+        STRlat[3,im-1,0] = p_value
+        # output_trend(ireg,reg,"../output/STR1loc.xls", "trend", month_abbr, STRlat)
 
         slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRslp[0,im-1,:])
         STRslp[1,im-1,:] = intercept + (slope * yrs)
+        STRslp[2,im-1,0] = slope
+        STRslp[3,im-1,0] = p_value
+        # output_trend(ireg,reg,"../output/STR1slp.xls", "trend", month_abbr, STRslp)
+
+
 
     #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # Plotting
@@ -515,5 +577,4 @@ for ireg in np.arange(nreg+1):
         if ireg == 0 and os.path.exists(fxls):
                 os.remove(fxls)
 
-        output(ireg,reg,fxls, "corr", month_abbr, cc[ireg,ifig,0,:])
-        output(ireg,reg,fxls, "corr_dt", month_abbr, cc[ireg,ifig,1,:])
+        output(ireg,reg,fxls, "corr", month_abbr, cc[ireg,ifig,:,:])
