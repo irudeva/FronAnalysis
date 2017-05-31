@@ -217,13 +217,12 @@ for yr in yrs:
                          if trkday>=dd[0] and trkday<=dd[1]:
                              if trkhr>=hr[0] and trkhr<=hr[1]:
 
-                                 if ssn == trkssn:
+                                 if ssn == trkssn or ssn == "YYY":
 
                                    if  trklat[ntrk,n]>=lat[0] and trklat[ntrk,n]<=lat[1]:
                                        if trklon[ntrk,n]>=lon[0] and trklon[ntrk,n]<=lon[1]:
-                                           trkmask[yr-yrar[0],ntrk,n] = trkmon
-                                           trkslp_mask[yr-yrar[0],ntrk,n] = trkslp[ntrk,n]
-
+                                           trkmask[yr-year[0],ntrk,n] = trkmon
+                                           trkslp_mask[yr-year[0],ntrk,n] = trkslp[ntrk,n]
 
 
 # ************************************************
@@ -237,10 +236,9 @@ ncyc_my3tr = np.zeros_like(ncyc_my)
 # fr_northlat_my3tr = np.zeros_like(ncyc_my)
 
 for im in range( 1,13):
-
   trkslptmp = trkslp_mask[np.where(trkmask == im)]
 
-  crit[im-1] =  np.percentile(trkslptmp,67)
+  crit[im-1] =  np.percentile(trkslptmp,33)
   print  month_abbr[im], crit[im-1]
 
   # hist, bin_edges = np.histogram(trlslptmp,range=(0.1,25))
@@ -255,8 +253,8 @@ for yr in yrs:
         # tmp0 = fr_northlat[yr-year[0],:,:][np.where(trkmask[yr-year[0],:,:] == im)]
         # fr_northlat_my[0,im-1,yr-year[0]]=np.mean(tmp0)
 
-        tmp  = trlslp[yr-year[0],:,:][np.where(trkmask[yr-year[0],:,:] == im)]
-        ncyc_my3tr[0,im-1,yr-year[0]]=np.count_nonzero(np.where(tmp>=crit[im-1], 1,0))
+        tmp  = trkslp_mask[yr-year[0],:,:][np.where(trkmask[yr-year[0],:,:] == im)]
+        ncyc_my3tr[0,im-1,yr-year[0]]=np.count_nonzero(np.where(tmp<=crit[im-1], 1,0))
         # fr_northlat_my3tr[0,im-1,yr-year[0]]=np.mean(tmp0[np.where(tmp>=crit[im-1])])
         # # ncyc_my3tr[im-1,yr-year[0]]=np.sum(trkmask[yr-year[0],:,:]==im and trlslp[yr-year[0],:,:]>=crit[im-1])
         # # print yr, im, month_abbr[im], fr_northlat_my[0,im-1,yr-year[0]],fr_northlat_my3tr[0,im-1,yr-year[0]]
@@ -273,23 +271,23 @@ for im in range( 1,13):
     slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,ncyc_my3tr[0,im-1,:])
     ncyc_my3tr[1,im-1,:] = intercept + (slope * yrs)
 
-    slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,fr_northlat_my[0,im-1,:])
-    fr_northlat_my[1,im-1,:] = intercept + (slope * yrs)
+    # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,fr_northlat_my[0,im-1,:])
+    # fr_northlat_my[1,im-1,:] = intercept + (slope * yrs)
+    #
+    # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,fr_northlat_my3tr[0,im-1,:])
+    # fr_northlat_my3tr[1,im-1,:] = intercept + (slope * yrs)
 
-    slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,fr_northlat_my3tr[0,im-1,:])
-    fr_northlat_my3tr[1,im-1,:] = intercept + (slope * yrs)
-
-    slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRlat[0,im-1,:])
-    STRlat[1,im-1,:] = intercept + (slope * yrs)
-
-    slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRslp[0,im-1,:])
-    STRslp[1,im-1,:] = intercept + (slope * yrs)
+    # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRlat[0,im-1,:])
+    # STRlat[1,im-1,:] = intercept + (slope * yrs)
+    #
+    # slope, intercept, r_value, p_value, std_err = stats.linregress(yrs,STRslp[0,im-1,:])
+    # STRslp[1,im-1,:] = intercept + (slope * yrs)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Plotting
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 plt.close('all')
-for ifig in np.arange(4,8):
+for ifig in np.arange(0,1):
     # fig = plt.figure(ifig)
     f, ax = plt.subplots(6, 2,  sharex='col', sharey='row')
 
@@ -330,37 +328,39 @@ for ifig in np.arange(4,8):
         yax1label = 'number of fronts'
         var1legend = 'N of strong fronts (int > 67th perc)'
 
-    if any ([4,6] == ifig ):
-        var1 = fr_northlat_my
-        yax1 = [-40, -25]
-        yax1label = 'latitude'
-        var1legend = 'front lat north'
+    # if any ([4,6] == ifig ):
+    #     var1 = fr_northlat_my
+    #     yax1 = [-40, -25]
+    #     yax1label = 'latitude'
+    #     var1legend = 'front lat north'
+    #
+    # if any ([5,7] == ifig ):
+    #     var1 = fr_northlat_my3tr
+    #     yax1 = [-40, -25]
+    #     yax1label = 'latitude'
+    #     var1legend = 'strong front lat north'
+    #
 
-    if any ([5,7] == ifig ):
-        var1 = fr_northlat_my3tr
-        yax1 = [-40, -25]
-        yax1label = 'latitude'
-        var1legend = 'strong front lat north'
-
-
-    if any ([0,1,4,5] == ifig ):
-        var2 = STRslp
-        yax2 = [1010, 1025]
-        yax2label = 'MSL Pressure (Pa)'
-        var2legend = 'STR intendity'
-
-    if any ([2,3,6,7] == ifig ):
-        var2 = STRlat
-        yax2 = [-40, -25]
-        yax2label = 'latitude'
-        var2legend = 'STR location'
-
-
+    # if any ([0,1,4,5] == ifig ):
+    #     var2 = STRslp
+    #     yax2 = [1010, 1025]
+    #     yax2label = 'MSL Pressure (Pa)'
+    #     var2legend = 'STR intendity'
+    #
+    # if any ([2,3,6,7] == ifig ):
+    #     var2 = STRlat
+    #     yax2 = [-40, -25]
+    #     yax2label = 'latitude'
+    #     var2legend = 'STR location'
+    #
+    #
     for ic in np.arange(2):
         for ir in np.arange(6):
             im = ir+ic*6
             a = ax[ir, ic]
             a2 = a.twinx()
+            var2 = var1
+            var2legend = var1legen
 
             a.plot(yrs,var1[0,im,:],color='b',lw=1,label=var1legend)
             a2.plot(yrs,var2[0,im,:],color='g',lw=1,label=var2legend)
