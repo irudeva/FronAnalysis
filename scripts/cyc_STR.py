@@ -222,9 +222,6 @@ for yr in yrs:
                                        if trklon[ntrk,n]>=lon[0] and trklon[ntrk,n]<=lon[1]:
                                            trkmask[yr-year[0],ntrk,n] = trkmon
                                            trkslp_mask[yr-year[0],ntrk,n] = trkslp[ntrk,n]
-                                           if yr -year[0] == 0 and ntrk ==19:
-                                               print trkmask[yr-year[0],ntrk,n]
-                                               print trkmask[0,19,:]
 
 
 # ************************************************
