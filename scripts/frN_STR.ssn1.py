@@ -282,7 +282,7 @@ for ireg in np.arange(5):
     #                               if flat[nt,ifr,ip]>=lat[0] and flat[nt,ifr,ip]<=lat[1]:
     #                                   if flon[nt,ifr,ip]>=lon[0] and flon[nt,ifr,ip]<=lon[1]:
     #                                       frmask[yr-year[0],nt-tfr1,ifr] = fdt[nt].month
-    #                                       frdv[yr-year[0],nt-tfr1,ifr] = np.mean(dv[nt,ifr,:npts[nt,ifr]])
+    #                                       frdv[yr-year[0],nt-tfr1,ifr] = np.sum(dv[nt,ifr,:npts[nt,ifr]])
     #                                       fr_northlat[yr-year[0],nt-tfr1,ifr] = np.amax(flat[nt,ifr,:npts[nt,ifr]])
     #                                     #   print yr-year[0],nt-tfr1,ifr, "   ",im,month_abbr[im], frmask[yr-year[0],nt-tfr1,ifr]
     #                                     #   print np.sum(frmask==im)
