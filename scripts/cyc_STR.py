@@ -38,8 +38,8 @@ reg = "20_40S"
 # lat = [ -40,-20]
 # reg = "0_150E.20_40S"
 
-maxnf = 200 # max # of fronts per timestep
-maxnp = 100 # max # of frontal points
+maxntrk = 20000 # max # of fronts per timestep
+maxnit = 200 # max # of frontal points
 
 # ************************************************
 # read in netCDF files
@@ -154,11 +154,14 @@ maxnp = 100 # max # of frontal points
 # plt.show()
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#  Fronts
+#  Cyclones
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# create mask
+trkmask = np.zeros([nyrs,maxntrk,maxnit],dtype=np.int)
+trkslp_mask = np.zeros_like(trkmask)
 
 for yr in yrs:
-  fin = "/Users/Irina/work/Projects/trkUOM/ERAint/trkgrid/trk.%d.nc"%yr
+  fin = "/Users/irudeva/work/Projects/CycTrkUOM/ERAint/trkgrid/trk.%d.nc"%yr
   print "cyclones from %s"%fin
   ncf = Dataset(fin, 'r')
 
@@ -172,21 +175,17 @@ for yr in yrs:
   # fdt = [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
   #      for t in time]
 
-  #
-  # if any(x > maxnf) :
-  #   print "ERROR: nf > maxnf"
-  #   quit()
-  #
-  # if any(x > maxnp ) :
-  #   print "ERROR:  np > maxnp"
-  #   quit()
-  #
+  if any(trklen > maxnit) :
+    print "ERROR: trklen > maxnit"
+    quit()
+
+  if trklen.size > maxntrk :
+    print "ERROR:  number of tracks > maxntrk"
+    quit()
+
   # ************************************************
   # masking
   # ************************************************
-  # create mask
-  trkmask = np.zeros([nyrs,trklen.size*2,200],dtype=np.int)
-  trkslp_mask = np.zeros_like(trkmask)
 
   for ntrk in np.arange(trklen.size):
       if ntrk+1>=ntrk1 and ntrk+1<=ntrk2:
@@ -209,7 +208,7 @@ for yr in yrs:
                  if trkmon in [6,7,8]:
                      trkssn = "JJA"
                  if trkmon in [9,10,11]:
-                     trkssn = "SOP"
+                     trkssn = "SON"
 
 
                  if trkyr>=year[0] and trkyr<=year[1]:
@@ -223,6 +222,9 @@ for yr in yrs:
                                        if trklon[ntrk,n]>=lon[0] and trklon[ntrk,n]<=lon[1]:
                                            trkmask[yr-year[0],ntrk,n] = trkmon
                                            trkslp_mask[yr-year[0],ntrk,n] = trkslp[ntrk,n]
+                                           if yr -year[0] == 0 and ntrk ==19:
+                                               print trkmask[yr-year[0],ntrk,n]
+                                               print trkmask[0,19,:]
 
 
 # ************************************************
@@ -235,11 +237,13 @@ ncyc_my3tr = np.zeros_like(ncyc_my)
 # fr_northlat_my = np.zeros_like(ncyc_my)
 # fr_northlat_my3tr = np.zeros_like(ncyc_my)
 
+print trkmask[0,19,:3]
 for im in range( 1,13):
   trkslptmp = trkslp_mask[np.where(trkmask == im)]
 
   crit[im-1] =  np.percentile(trkslptmp,33)
   print  month_abbr[im], crit[im-1]
+  print trkmask[0,19,:3]
 
   # hist, bin_edges = np.histogram(trlslptmp,range=(0.1,25))
   # print "pdf: ",hist
@@ -259,7 +263,6 @@ for yr in yrs:
         # # ncyc_my3tr[im-1,yr-year[0]]=np.sum(trkmask[yr-year[0],:,:]==im and trlslp[yr-year[0],:,:]>=crit[im-1])
         # # print yr, im, month_abbr[im], fr_northlat_my[0,im-1,yr-year[0]],fr_northlat_my3tr[0,im-1,yr-year[0]]
         # # print np.count_nonzero(np.where(trkmask[yr-year[0],:,:]== im, 1,0))
-
 # ************************************************
 # trends
 # ************************************************
@@ -360,13 +363,14 @@ for ifig in np.arange(0,1):
             a = ax[ir, ic]
             a2 = a.twinx()
             var2 = var1
-            var2legend = var1legen
+            var2legend = var1legend
+            yax2label = yax1label
 
             a.plot(yrs,var1[0,im,:],color='b',lw=1,label=var1legend)
             a2.plot(yrs,var2[0,im,:],color='g',lw=1,label=var2legend)
-            # ax[ir, ic].set_title('STR intensity, %s, SH'%month_abbr[ir+ic*6+1])
-            a.axis((year[0]-1, year[1], yax1[0], yax1[1]))
-            a2.axis((year[0]-1, year[1], yax2[0], yax2[1]))
+            # a.set_title('STR intensity, %s, SH'%month_abbr[ir+ic*6+1])
+            #! a.axis((year[0]-1, year[1], yax1[0], yax1[1]))
+            #! a2.axis((year[0]-1, year[1], yax2[0], yax2[1]))
 
             if im == 3:
                 ax[ir, ic].set_ylabel(yax1label,color='b')
