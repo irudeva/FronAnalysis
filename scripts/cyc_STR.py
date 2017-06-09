@@ -161,32 +161,32 @@ cc = np.zeros((nreg+1,nfig+1,2,nt),dtype=np.float) # correlation
 for ireg in np.arange(nreg+1):
     if ireg == 0:
         lon = [ -90,361]
-        lat = [ -60,-40]
+        lat = [ -40,-20]
         reg = "%d_%dS"%(np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 1:
         lon = [ 30,90]
-        lat = [ -60,-40]
+        lat = [ -40,-20]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 2:
         lon = [ 90,150]
-        lat = [ -60,-40]
+        lat = [ -40,-20]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 3:
         lon = [ 150,210]
-        lat = [ -60,-40]
+        lat = [ -40,-20]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 4:
         lon = [ 210,285]
-        lat = [ -60,-40]
+        lat = [ -40,-20]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 5:
         lon = [ 300,340]
-        lat = [ -60,-40]
+        lat = [ -40,-20]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
 
