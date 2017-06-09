@@ -1,11 +1,8 @@
 from netCDF4 import Dataset
 import datetime as datetime
 import calendar
-
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
-from mpl_toolkits.axes_grid1 import host_subplot
-import mpl_toolkits.axisartist as AA
 
 import numpy as np
 from scipy import stats
@@ -117,10 +114,10 @@ def trend(ireg,reg,nt,yrs,var,var_tr,title,tperiod,filetrend):
 
     output_trend(ireg,reg,filetrend, "trend", title,tperiod,var_tr)
 
+
 # for multiple regression
 def fn(x, a, b, c):
     return a + b*x[0] + c*x[1]
-
 
 
 
@@ -157,9 +154,9 @@ if tscale == "mon":    #for monthly analysis
 nf1 = 0# 5518 ;0
 nf2 = 20000# 5518 ;20000
 
-nfig = 11  # possible combinations of vars; 11 for multiple regression
-fig1 = 11
-fig2 = 11
+nfig = 10  # possible combinations of vars
+fig1 = 0
+fig2 = 7
 
 
 hs = "SH"
@@ -324,8 +321,8 @@ for ireg in np.arange(nreg+1):
 
     # # write max/min STR years to a file
     # for it in np.arange(nt):
-    #     print ssn[it],STR1slp[0,it,:]
-    #     fSTRint = "../output/STRint.%s.%s%d_%d.txt"%(reg,ssn[it],year[0],year[1]-1)
+    #     print tperiod[it],STR1slp[0,it,:]
+    #     fSTRint = "../output/STRint.%s.%s%d_%d.txt"%(reg,tperiod[it],year[0],year[1]-1)
     #     with open(fSTRint, "w") as text_file:
     #         text_file.write("{:>7}{:>7}{:>7}{:>7}\n".format("STRmax",  "Yrmax",  "STRmin",   "Yrmin"))
     #
@@ -336,7 +333,7 @@ for ireg in np.arange(nreg+1):
     #         for i in range(nsel):
     #             text_file.write("{0[0]:.2f} {0[1]:6d} {0[2]:.2f} {0[3]:6d}\n".format([STR1slp[0,it,top][i],yrs[top][i],STR1slp[0,it,bottom][i],yrs[bottom][i]]))
     #
-    #     fSTRlat = "../output/STRloc.%s.%s%d_%d.txt"%(reg,ssn[it],year[0],year[1]-1)
+    #     fSTRlat = "../output/STRloc.%s.%s%d_%d.txt"%(reg,tperiod[it],year[0],year[1]-1)
     #     with open(fSTRlat, "w") as text_file:
     #         text_file.write("{:>7}{:>7}{:>7}{:>7}\n".format("STRmax",  "Yrmax",  "STRmin",   "Yrmin"))
     #
@@ -514,327 +511,291 @@ for ireg in np.arange(nreg+1):
                     # print np.count_nonzero(np.where(frmask[yr-year[0],:,:]== im, 1,0))
 
     # ************************************************
-    # trends
+    #  Record Numbers for multiple regression
     # ************************************************
 
-    # fronts
-
-    title = "Trends in N of fronts"
-    filetrend = "../output/trend.Nfr.%d_%d.xls"%(year[0],year[1]-1)
-    trend(ireg,reg,nt,yrs,nfr_my,nfr_my_tr,title,tperiod,filetrend)
-
-    title = "Trends in N of STRONG fronts"
-    filetrend = "../output/trend.Nfrstr.%d_%d.xls"%(year[0],year[1]-1)
-    trend(ireg,reg,nt,yrs,nfr_my3tr,nfr_my3tr_tr,title,tperiod,filetrend)
-
-    title = "Trends in frontal NP lat"
-    filetrend = "../output/trend.frNPlat.%d_%d.xls"%(year[0],year[1]-1)
-    trend(ireg,reg,nt,yrs,frNPlat_my,frNPlat_my_tr,title,tperiod,filetrend)
-
-    title = "Trends in STRONG fronts NP lat"
-    filetrend = "../output/trend.frNPlat_str.%d_%d.xls"%(year[0],year[1]-1)
-    trend(ireg,reg,nt,yrs,frNPlat_my3tr,frNPlat_my3tr_tr,title,tperiod,filetrend)
-
-
-    # STR
-
-    title = "Trends in STR1 location"
-    filetrend = "../output/trend.STR1loc.%d_%d.xls"%(year[0],year[1]-1)
-    trend(ireg,reg,nt,yrs,STR1lat,STR1lat_tr,title,tperiod,filetrend)
-
-    title = "Trends in STR1 intensity"
-    filetrend = "../output/trend.STR1int.%d_%d.xls"%(year[0],year[1]-1)
-    trend(ireg,reg,nt,yrs,STR1slp,STR1slp_tr,title,tperiod,filetrend)
-
-    title = "Trends in STR2 location"
-    filetrend = "../output/trend.STR2loc.%d_%d.xls"%(year[0],year[1]-1)
-    trend(ireg,reg,nt,yrs,STR2lat,STR2lat_tr,title,tperiod,filetrend)
-
-    title = "Trends in STR2 intensity"
-    filetrend = "../output/trend.STR2int.%d_%d.xls"%(year[0],year[1]-1)
-    trend(ireg,reg,nt,yrs,STR2slp,STR2slp_tr,title,tperiod,filetrend)
-
-
-    #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # Plotting
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    majorLocator = MultipleLocator(5)
-    majorFormatter = FormatStrFormatter('%d')
-    minorLocator = MultipleLocator(1)
-
-    if tscale == "mon":
-        nc = 2
-        nr = 6
-        wdth = 3.5
-    if tscale == "ssn":
-        nc = 1
-        nr = nt
-        wdth = 3.
-
-
-    # plt.ion()
-    plt.close('all')
-    for ifig in np.arange(fig1,fig2+1):
-        # fig = plt.figure(ifig)
-        if ifig != 11:
-            f, ax = plt.subplots(nr, nc,  sharex='col', sharey='row',figsize=(wdth*3.13,4.2*3.13))
-        elif ifig == 11:
-            f, ax = host_subplot("%d%d1"%(nr,nc), axes_class=AA.Axes)
-
-        if ifig ==0:
-            title = 'STR intensity vs number of fronts, %s'%reg
-            fout = "frN_STRint"
-        if ifig ==1:
-            title = 'STR intensity vs number of strong fronts, %s'%reg
-            fout = "frNstr_STRint"
-        if ifig ==2:
-            title = 'STR location vs number of fronts, %s'%reg
-            fout = "frN_STRloc"
-        if ifig ==3:
-            title = 'STR location vs number of strong fronts, %s'%reg
-            fout = "frNstr_STRloc"
-        if ifig ==4:
-            title = 'STR intensity vs north lat of fronts, %s'%reg
-            fout = "frNorthLat_STRint"
-        if ifig ==5:
-            title = 'STR intensity vs north lat of strong fronts, %s'%reg
-            fout = "frNorthLatstr_STRint"
-        if ifig ==6:
-            title = 'STR location vs north lat of fronts, %s'%reg
-            fout = "frNorthLat_STRloc"
-        if ifig ==7:
-            title = 'STR location vs north lat of strong fronts, %s'%reg
-            fout = "frNorthLatstr_STRloc"
-        if ifig ==8:
-            title = 'STR1 intensity vs location, %s'%reg
-            fout = "STR1int_STR1loc"
-        if ifig ==9:
-            title = 'STR1 intensity vs STR2 intensity, %s'%reg
-            fout = "STR1int_STR2int"
-        if ifig ==10:
-            title = 'STR1 location vs STR2 location, %s'%reg
-            fout = "STR1loc_STR2loc"
-        if ifig ==10:
-            title = 'Number of fronts vs STR location and intensity, %s'%reg
-            fout = "frN_STRloc_STRint"
-        plt.suptitle(title,fontsize=14)
-
-        if ifig < 11:
-
-            if ifig ==0 or ifig == 2:
-                var1 = nfr_my
-                yax1 = [900, 1800]
-                yax1label = 'number of fronts'
-                var1legend = 'N of fronts'
-
-            if ifig ==1 or ifig == 3:
-                var1 = nfr_my3tr
-                yax1 = [300, 700]
-                yax1label = 'number of fronts'
-                var1legend = 'N of strong fronts (int > 67th perc)'
-
-            if any ([4,6] == ifig ):
-                var1 = frNPlat_my
-                yax1 = [-40, -25]
-                yax1label = 'latitude'
-                var1legend = 'front lat north'
-
-            if any ([5,7] == ifig ):
-                var1 = frNPlat_my3tr
-                yax1 = [-40, -25]
-                yax1label = 'latitude'
-                var1legend = 'strong front lat north'
-
-            if any ([0,1,4,5] == ifig ):
-                var2 = STR1slp
-                yax2 = [1010, 1025]
-                yax2label = 'MSL Pressure (Pa)'
-                var2legend = 'STR intensity'
-
-            if any ([0,1,4,5] == ifig ):
-                var2 = STR1slp
-                yax2 = [1010, 1025]
-                yax2label = 'MSL Pressure (Pa)'
-                var2legend = 'STR intensity'
-
-            if any ([2,3,6,7,8] == ifig ):
-                var2 = STR1lat
-                yax2 = [-40, -25]
-                yax2label = 'latitude'
-                var2legend = 'STR location'
-
-            if any ([8,9] == ifig ):
-                var1 = STR1slp
-                yax1 = [1010, 1025]
-                yax1label = 'MSL Pressure (Pa)'
-                var1legend = 'STR1 intensity'
-
-            if ifig == 9:
-                var2 = STR2slp
-                yax2 = [1010, 1025]
-                yax2label = 'MSL Pressure (Pa)'
-                var2legend = 'STR2 intensity'
-
-            if ifig == 10:
-                var1 = STR1lat
-                yax1 = [-40, -25]
-                yax1label = 'latitude'
-                var1legend = 'STR1 location'
-
-                var2 = STR2lat
-                yax2 = [-40, -25]
-                yax2label = 'latitude'
-                var2legend = 'STR2 location'
-
-
-            for ic in np.arange(nc):
-                for ir in np.arange(nr):
-                    it = ir+ic*6
-
-                    if tscale == 'mon':
-                        a = ax[ir, ic]
-                    if tscale == 'ssn':
-                        a = ax[it]
-                    a2 = a.twinx()
-
-                    a.plot(yrs,var1[0,it,:],color='b',lw=1,label=var1legend)
-                    a2.plot(yrs,var2[0,it,:],color='g',lw=1,label=var2legend)
-                    # ax[ir, ic].set_title('STR intensity, %s, SH'%tperiod[ir+ic*6])
-
-                    # a.axis((year[0]-1, year[1], yax1[0], yax1[1]))
-                    # a2.axis((year[0]-1, year[1], yax2[0], yax2[1]))
-                    # ax2.set_ylim(0, 35)
-                    # ax.set_ylim(-20,100)
-
-                    # a.xaxis.set_ticks(yrs)
-                    # xa = a.get_xaxis()
-                    # a.xaxis.set_tick_params(axis='x',which='major',length=6,width =2)
-                    # a.xaxis.set_tick_params(axis='x',which='minor',length=3,width =2)
-
-                    a.xaxis.set_major_locator(majorLocator)
-                    a.xaxis.set_major_formatter(majorFormatter)
-                    a.yaxis.set_major_formatter(majorFormatter)
-                    a2.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-
-                    # for the minor ticks, use no labels; default NullFormatter
-                    a.xaxis.set_minor_locator(minorLocator)
-
-                    a.grid()
-
-                    if tscale == "mon":
-                        if it == 3:
-                            a.set_ylabel(yax1label,color='b')
-                        if it == 9:
-                            a2.set_ylabel(yax2label,color='g')
-                        if ir == 5 :
-                            a.set_xlabel('Year')
-                    if tscale == "ssn":
-                        if it == 3 :
-                            a.set_ylabel(yax1label,color='b')
-                            a2.set_ylabel(yax2label,color='g')
-                        if it == nt-1 :
-                            a.set_xlabel('Year')
-
-                    #  trend
-                    a.plot(yrs,var1[1,it,:],color='b',lw=2)
-                    a2.plot(yrs,var2[1,it,:],color='g',lw=2)
-
-                    mask = mask = ~np.isnan(var1[0,it,:]) & ~np.isnan(var2[0,it,:])
-                    cctmp = np.corrcoef(var1[0,it,mask],var2[0,it,mask])
-                    cc[ireg,ifig,0,it] = cctmp[1,0]
-                    cctmp = np.corrcoef(var1[0,it,mask]-var1[1,it,mask],var2[0,it,mask]-var2[1,it,mask])
-                    cc[ireg,ifig,1,it] = cctmp[1,0]
-
-                    a.set_title(' %s, %s, r = %.2f, r_dt = %.2f'%(tperiod[ir+ic*6],reg,cc[ireg,ifig,0,it],cc[ireg,ifig,1,it]))
-
-                    if it == nt-1 :
-                        # ask matplotlib for the plotted objects and their labels
-                        lines, labels = a.get_legend_handles_labels()
-                        lines2, labels2 = a2.get_legend_handles_labels()
-                        a2.legend(lines + lines2, labels + labels2, loc='lower right')
-
-                        # ax[ir, ic].legend(loc='lower right')
-
-            # plt.setp([a.set_xlabel('Year') for a in ax[5, :]])
-        elif ifig == 11:
-            var1 = nfr_my
-            yax1 = [900, 1800]
-            yax1label = 'number of fronts'
-            var1legend = 'N of fronts'
-
-            var2 = STR1lat
-            yax2 = [-40, -25]
-            yax2label = 'latitude'
-            var2legend = 'STR location'
-
-            var3 = STR1slp
-            yax3 = [1010, 1025]
-            yax3label = 'MSL Pressure (Pa)'
-            var3legend = 'STR intensity'
-
-            for ic in np.arange(nc):
-                    for ir in np.arange(nr):
-                        it = ir+ic*6
-
-                        if tscale == 'mon':
-                            a = ax[ir, ic]
-                        if tscale == 'ssn':
-                            a = ax[it]
-                        a2 = a.twinx()
-                        a3 = a.twinx()
-
-
-                        offset = 60
-                        new_fixed_axis = a3.get_grid_helper().new_fixed_axis
-                        a3.axis["right"] = new_fixed_axis(loc="right",
-                                                            axes=a3,
-                                                            offset=(offset, 0))
-
-                        a3.axis["right"].toggle(all=True)
-
-                        a.plot(yrs,var1[0,it,:],color='b',lw=1,label=var1legend)
-                        a2.plot(yrs,var2[0,it,:],color='g',lw=1,label=var2legend)
-                        a3.plot(yrs,var3[0,it,:],color='g',lw=1,label=var3legend)
-
-                        a.xaxis.set_major_locator(majorLocator)
-                        a.xaxis.set_major_formatter(majorFormatter)
-                        a.yaxis.set_major_formatter(majorFormatter)
-                        a2.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-                        a3.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-
-                        # for the minor ticks, use no labels; default NullFormatter
-                        a.xaxis.set_minor_locator(minorLocator)
-
-                        a.grid()
-
-                        # multiple regression
-
-                        x = np.stack(var2[0,it,:],var3[0,it,:])
-                        y = var1[0,it,:]
-                        popt, pcov = curve_fit(fn, x, y)
-                        print popt
-
-
-                        a.set_title(' %s, %s, r = %.2f, r_dt = %.2f'%(tperiod[ir+ic*6],popt))
-                        if it == nt-1 :
-                            # ask matplotlib for the plotted objects and their labels
-                            lines, labels = a.get_legend_handles_labels()
-                            lines2, labels2 = a2.get_legend_handles_labels()
-                            lines3, labels3 = a3.get_legend_handles_labels()
-                            a2.legend(lines + lines2++ lines3, labels + labels2+labels3, loc='lower right')
-
-
-
-        f.subplots_adjust(hspace=0.3)
-        plt.draw()
-        f.savefig("../output/%s.%s.%d_%d.png"%(fout,reg,year[0],year[1]-1))
-        plt.close(f)
-
-        # ************************************************
-        #  correlations to Excel
-        # ************************************************
-        # fxls = "../output/%s.%d_%d.xls"%(fout,year[0],year[1]-1)
-        # if ireg == 0 and os.path.exists(fxls):
-        #         os.remove(fxls)
-        # output(ireg,reg,fxls, "corr", title, tperiod, cc[ireg,ifig,:,:])
+    for it in np.arange(nt):
+        print tperiod[it]
+        fN = "../output/frN_STR.%s.%s%d_%d.txt"%(reg,tperiod[it],year[0],year[1]-1)
+        with open(fN, "w") as text_file:
+            text_file.write("{:>4}{:>7}{:>7}{:>7}\n".format("year","frN",  "STRloc",  "STRint"))
+
+            for yr in yrs:
+                iyr = yr - year[0]
+                # print "{:4d} {:.2f} {:.2f} {:.2f}\n".format(yr, nfr_my[0,it,iyr],STR1lat[0,it,yr-year[0]],STR1slp[0,it,yr-year[0]])
+                text_file.write("{:4d} {:.2f} {:.2f} {:.2f}\n".format(yr, nfr_my[0,it,iyr],STR1lat[0,it,yr-year[0]],STR1slp[0,it,yr-year[0]]))
+
+
+            x = np.array((np.ones(len(STR1lat[0,it,:])),STR1lat[0,it,:],STR1slp[0,it,:]))
+            x = x.T
+            print x.shape
+            print nfr_my[0,it,:].shape
+            # X = np.column_stack(x+[[1]*len(x[0])])
+            print x
+            beta_hat = np.linalg.lstsq(x,nfr_my[0,it,:])[0]
+            print beta_hat
+            print np.dot(x,beta_hat)
+            print np.linalg.lstsq(x,nfr_my[0,it,:])
+            # popt, pcov = curve_fit(fn, x,nfr_my[0,it,:])
+            #
+            # print popt
+            #
+            # print pcov
+            #
+            print  beta_hat[0]+beta_hat[1]*STR1lat[0,it,:]+beta_hat[2]*STR1slp[0,it,:]
+
+            # print c
+
+            quit()
+
+
+    # # ************************************************
+    # # trends
+    # # ************************************************
+    #
+    # # fronts
+    #
+    # title = "Trends in N of fronts"
+    # filetrend = "../output/trend.Nfr.%d_%d.xls"%(year[0],year[1]-1)
+    # trend(ireg,reg,nt,yrs,nfr_my,nfr_my_tr,title,tperiod,filetrend)
+    #
+    # title = "Trends in N of STRONG fronts"
+    # filetrend = "../output/trend.Nfrstr.%d_%d.xls"%(year[0],year[1]-1)
+    # trend(ireg,reg,nt,yrs,nfr_my3tr,nfr_my3tr_tr,title,tperiod,filetrend)
+    #
+    # title = "Trends in frontal NP lat"
+    # filetrend = "../output/trend.frNPlat.%d_%d.xls"%(year[0],year[1]-1)
+    # trend(ireg,reg,nt,yrs,frNPlat_my,frNPlat_my_tr,title,tperiod,filetrend)
+    #
+    # title = "Trends in STRONG fronts NP lat"
+    # filetrend = "../output/trend.frNPlat_str.%d_%d.xls"%(year[0],year[1]-1)
+    # trend(ireg,reg,nt,yrs,frNPlat_my3tr,frNPlat_my3tr_tr,title,tperiod,filetrend)
+    #
+    #
+    # # STR
+    #
+    # title = "Trends in STR1 location"
+    # filetrend = "../output/trend.STR1loc.%d_%d.xls"%(year[0],year[1]-1)
+    # trend(ireg,reg,nt,yrs,STR1lat,STR1lat_tr,title,tperiod,filetrend)
+    #
+    # title = "Trends in STR1 intensity"
+    # filetrend = "../output/trend.STR1int.%d_%d.xls"%(year[0],year[1]-1)
+    # trend(ireg,reg,nt,yrs,STR1slp,STR1slp_tr,title,tperiod,filetrend)
+    #
+    # title = "Trends in STR2 location"
+    # filetrend = "../output/trend.STR2loc.%d_%d.xls"%(year[0],year[1]-1)
+    # trend(ireg,reg,nt,yrs,STR2lat,STR2lat_tr,title,tperiod,filetrend)
+    #
+    # title = "Trends in STR2 intensity"
+    # filetrend = "../output/trend.STR2int.%d_%d.xls"%(year[0],year[1]-1)
+    # trend(ireg,reg,nt,yrs,STR2slp,STR2slp_tr,title,tperiod,filetrend)
+    #
+    #
+    # #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # # Plotting
+    # # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    #
+    # majorLocator = MultipleLocator(5)
+    # majorFormatter = FormatStrFormatter('%d')
+    # minorLocator = MultipleLocator(1)
+    #
+    # if tscale == "mon":
+    #     nc = 2
+    #     nr = 6
+    #     wdth = 3.5
+    # if tscale == "ssn":
+    #     nc = 1
+    #     nr = nt
+    #     wdth = 3.
+    #
+    #
+    # # plt.ion()
+    # plt.close('all')
+    # for ifig in np.arange(fig1,fig2+1):
+    #     # fig = plt.figure(ifig)
+    #     f, ax = plt.subplots(nr, nc,  sharex='col', sharey='row',figsize=(wdth*3.13,4.2*3.13))
+    #
+    #     if ifig ==0:
+    #         title = 'STR intensity vs number of fronts, %s'%reg
+    #         fout = "frN_STRint"
+    #     if ifig ==1:
+    #         title = 'STR intensity vs number of strong fronts, %s'%reg
+    #         fout = "frNstr_STRint"
+    #     if ifig ==2:
+    #         title = 'STR location vs number of fronts, %s'%reg
+    #         fout = "frN_STRloc"
+    #     if ifig ==3:
+    #         title = 'STR location vs number of strong fronts, %s'%reg
+    #         fout = "frNstr_STRloc"
+    #     if ifig ==4:
+    #         title = 'STR intensity vs north lat of fronts, %s'%reg
+    #         fout = "frNorthLat_STRint"
+    #     if ifig ==5:
+    #         title = 'STR intensity vs north lat of strong fronts, %s'%reg
+    #         fout = "frNorthLatstr_STRint"
+    #     if ifig ==6:
+    #         title = 'STR location vs north lat of fronts, %s'%reg
+    #         fout = "frNorthLat_STRloc"
+    #     if ifig ==7:
+    #         title = 'STR location vs north lat of strong fronts, %s'%reg
+    #         fout = "frNorthLatstr_STRloc"
+    #     if ifig ==8:
+    #         title = 'STR1 intensity vs location, %s'%reg
+    #         fout = "STR1int_STR1loc"
+    #     if ifig ==9:
+    #         title = 'STR1 intensity vs STR2 intensity, %s'%reg
+    #         fout = "STR1int_STR2int"
+    #     if ifig ==10:
+    #         title = 'STR1 location vs STR2 location, %s'%reg
+    #         fout = "STR1loc_STR2loc"
+    #     plt.suptitle(title,fontsize=14)
+    #
+    #     if ifig ==0 or ifig == 2:
+    #         var1 = nfr_my
+    #         yax1 = [900, 1800]
+    #         yax1label = 'number of fronts'
+    #         var1legend = 'N of fronts'
+    #
+    #     if ifig ==1 or ifig == 3:
+    #         var1 = nfr_my3tr
+    #         yax1 = [300, 700]
+    #         yax1label = 'number of fronts'
+    #         var1legend = 'N of strong fronts (int > 67th perc)'
+    #
+    #     if any ([4,6] == ifig ):
+    #         var1 = frNPlat_my
+    #         yax1 = [-40, -25]
+    #         yax1label = 'latitude'
+    #         var1legend = 'front lat north'
+    #
+    #     if any ([5,7] == ifig ):
+    #         var1 = frNPlat_my3tr
+    #         yax1 = [-40, -25]
+    #         yax1label = 'latitude'
+    #         var1legend = 'strong front lat north'
+    #
+    #     if any ([0,1,4,5] == ifig ):
+    #         var2 = STR1slp
+    #         yax2 = [1010, 1025]
+    #         yax2label = 'MSL Pressure (Pa)'
+    #         var2legend = 'STR intensity'
+    #
+    #     if any ([0,1,4,5] == ifig ):
+    #         var2 = STR1slp
+    #         yax2 = [1010, 1025]
+    #         yax2label = 'MSL Pressure (Pa)'
+    #         var2legend = 'STR intensity'
+    #
+    #     if any ([2,3,6,7,8] == ifig ):
+    #         var2 = STR1lat
+    #         yax2 = [-40, -25]
+    #         yax2label = 'latitude'
+    #         var2legend = 'STR location'
+    #
+    #     if any ([8,9] == ifig ):
+    #         var1 = STR1slp
+    #         yax1 = [1010, 1025]
+    #         yax1label = 'MSL Pressure (Pa)'
+    #         var1legend = 'STR1 intensity'
+    #
+    #     if ifig == 9:
+    #         var2 = STR2slp
+    #         yax2 = [1010, 1025]
+    #         yax2label = 'MSL Pressure (Pa)'
+    #         var2legend = 'STR2 intensity'
+    #
+    #     if ifig == 10:
+    #         var1 = STR1lat
+    #         yax1 = [-40, -25]
+    #         yax1label = 'latitude'
+    #         var1legend = 'STR1 location'
+    #
+    #         var2 = STR2lat
+    #         yax2 = [-40, -25]
+    #         yax2label = 'latitude'
+    #         var2legend = 'STR2 location'
+    #
+    #
+    #     for ic in np.arange(nc):
+    #         for ir in np.arange(nr):
+    #             it = ir+ic*6
+    #
+    #             if tscale == 'mon':
+    #                 a = ax[ir, ic]
+    #             if tscale == 'ssn':
+    #                 a = ax[it]
+    #             a2 = a.twinx()
+    #
+    #             a.plot(yrs,var1[0,it,:],color='b',lw=1,label=var1legend)
+    #             a2.plot(yrs,var2[0,it,:],color='g',lw=1,label=var2legend)
+    #             # ax[ir, ic].set_title('STR intensity, %s, SH'%tperiod[ir+ic*6])
+    #
+    #             # a.axis((year[0]-1, year[1], yax1[0], yax1[1]))
+    #             # a2.axis((year[0]-1, year[1], yax2[0], yax2[1]))
+    #             # ax2.set_ylim(0, 35)
+    #             # ax.set_ylim(-20,100)
+    #
+    #             # a.xaxis.set_ticks(yrs)
+    #             # xa = a.get_xaxis()
+    #             # a.xaxis.set_tick_params(axis='x',which='major',length=6,width =2)
+    #             # a.xaxis.set_tick_params(axis='x',which='minor',length=3,width =2)
+    #
+    #             a.xaxis.set_major_locator(majorLocator)
+    #             a.xaxis.set_major_formatter(majorFormatter)
+    #             a.yaxis.set_major_formatter(majorFormatter)
+    #             a2.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    #
+    #             # for the minor ticks, use no labels; default NullFormatter
+    #             a.xaxis.set_minor_locator(minorLocator)
+    #
+    #             a.grid()
+    #
+    #             if tscale == "mon":
+    #                 if it == 3:
+    #                     a.set_ylabel(yax1label,color='b')
+    #                 if it == 9:
+    #                     a2.set_ylabel(yax2label,color='g')
+    #                 if ir == 5 :
+    #                     a.set_xlabel('Year')
+    #             if tscale == "ssn":
+    #                 if it == 3 :
+    #                     a.set_ylabel(yax1label,color='b')
+    #                     a2.set_ylabel(yax2label,color='g')
+    #                 if it == nt-1 :
+    #                     a.set_xlabel('Year')
+    #
+    #             #  trend
+    #             a.plot(yrs,var1[1,it,:],color='b',lw=2)
+    #             a2.plot(yrs,var2[1,it,:],color='g',lw=2)
+    #
+    #             mask = mask = ~np.isnan(var1[0,it,:]) & ~np.isnan(var2[0,it,:])
+    #             cctmp = np.corrcoef(var1[0,it,mask],var2[0,it,mask])
+    #             cc[ireg,ifig,0,it] = cctmp[1,0]
+    #             cctmp = np.corrcoef(var1[0,it,mask]-var1[1,it,mask],var2[0,it,mask]-var2[1,it,mask])
+    #             cc[ireg,ifig,1,it] = cctmp[1,0]
+    #
+    #             a.set_title(' %s, %s, r = %.2f, r_dt = %.2f'%(tperiod[ir+ic*6],reg,cc[ireg,ifig,0,it],cc[ireg,ifig,1,it]))
+    #
+    #             if it == nt-1 :
+    #                 # ask matplotlib for the plotted objects and their labels
+    #                 lines, labels = a.get_legend_handles_labels()
+    #                 lines2, labels2 = a2.get_legend_handles_labels()
+    #                 a2.legend(lines + lines2, labels + labels2, loc='lower right')
+    #
+    #                 # ax[ir, ic].legend(loc='lower right')
+    #
+    #     # plt.setp([a.set_xlabel('Year') for a in ax[5, :]])
+    #
+    #
+    #     f.subplots_adjust(hspace=0.3)
+    #     plt.draw()
+    #     f.savefig("../output/%s.%s.%d_%d.png"%(fout,reg,year[0],year[1]-1))
+    #     plt.close(f)
+    #
+    #     # ************************************************
+    #     #  correlations to Excel
+    #     # ************************************************
+    #     fxls = "../output/%s.%d_%d.xls"%(fout,year[0],year[1]-1)
+    #     if ireg == 0 and os.path.exists(fxls):
+    #             os.remove(fxls)
+    #     output(ireg,reg,fxls, "corr", title, tperiod, cc[ireg,ifig,:,:])
