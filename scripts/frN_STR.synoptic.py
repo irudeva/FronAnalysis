@@ -9,6 +9,8 @@ from scipy import stats
 from scipy.optimize import curve_fit
 import scipy
 
+import os.path
+
 # import xlwt,xlrd
 # from xlutils.copy import copy
 # import os
@@ -126,7 +128,7 @@ def fn(x, a, b, c):
 # ************************************************
 
 # time
-year = [1979,2016]
+year = [1979,1980]
 yrs = np.arange(year[0],year[1],1)
 nyrs = np.size(yrs)
 x = np.arange(0,nyrs-1,1)
@@ -134,6 +136,8 @@ x = np.arange(0,nyrs-1,1)
 mm = [1,12]  #[ 9,9]
 dd = [1,31]
 hr = [0,18]
+
+lag = 15 #lag in days
 
 #choose time scale
 tscale = "ssn"
@@ -144,10 +148,10 @@ ssn=["","YYY","DJF","MAM","JJA","SON"]
 month_abbr = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
                     "Oct","Nov","Dec"]
 if tscale == "ssn":
-    nt = 5      #for ssn
+    nt = 5+1      #for ssn
     tperiod = ssn
 if tscale == "mon":    #for monthly analysis
-    nt = 12
+    nt = 12+1
     tperiod = month_abbr
 
 # nf
@@ -209,222 +213,298 @@ for ireg in np.arange(nreg+1):
     # 1. slp
     # ************************************************
 
-    for yr in yrs:
-      slpyr = yr
-      fin = "/Users/irudeva/work/DATA/ERAint/Mslp_highres/erain_hr.slp.%d.10_70S.nc"%slpyr
-      print "Slp from", fin
-      nc = Dataset(fin, 'r')
-
-      # varnam=['longitude','latitude','time','msl']
-      # v=0
-      # for var in varnam:
-      #   if nc.variables[varnam[v]].name != var:
-      #       print "Variables don't agree", var, nc.variables[varnam[v]].name, v
-      #       exit()
-      #   v += 1
-
-      # nc_attrs, nc_dims, nc_vars = ncdump(nc)
-
-      # print nc_attrs, nc_dims, nc_vars
-      print nc.variables.keys()
-      if nc.variables.keys()[0]=="lon":
-          lonslp = nc.variables['lon'][:]
-          latslp = nc.variables['lat'][:]
-      elif nc.variables.keys()[0]=="longitude":
-          lonslp = nc.variables['longitude'][:]
-          latslp = nc.variables['latitude'][:]
-      else:
-         print"Check lon/lat names in the netcdf file, %d "%yr
-      time = nc.variables['time'][:]
-      mslp = nc.variables['msl'][:]/100.
-
-      dt_slp = [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
-           for t in time]
-      print dt_slp[1].year
-      print len(dt_slp)
-      quit()
-
-
-      latslpSH  = latslp[np.logical_and(latslp<-20,latslp>-65)]
-      mslpSH    = mslp[:,np.logical_and(latslp<-20,latslp>-65),:]
-      mslpSHlon = mslpSH[:,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])]
-      mslpSHlonDec = mslpSHlon[-1,:,:]
-
-      # zonal average
-      slp_z = np.mean(mslpSHlon,axis=2)
-    #   slp_zDec = np.mean(mslpSHlon[-1,:,:],axis=1)
-
-      if yr==year[0]:
-          STR1slp = np.zeros((2,nt,nyrs,),dtype=np.float)
-          STR1lat = np.zeros_like(STR1slp)
-          STR1slp_tr = np.zeros((2,nt),dtype=np.float)
-          STR1lat_tr = np.zeros_like(STR1slp_tr)
-
-          STR2slp = np.zeros_like(STR1slp)
-          STR2lat = np.zeros_like(STR2slp)
-          STR2slp_tr = np.zeros_like(STR1slp_tr)
-          STR2lat_tr = np.zeros_like(STR1slp_tr)
-
-
-      if tscale == 'mon' :
-          for im in np.arange(slp_z[:,0].size):
-            #   print dt_slp[im].month
-              STR1slp[0,im,yr-year[0]] = np.amax(slp_z[im,:])
-              STR1lat[0,im,yr-year[0]] = latslpSH[np.argmax(slp_z[im,:])]
-
-              STR2slp[0,im,yr-year[0]] = np.mean(np.amax(mslpSH[im,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1))
-              STR2lat[0,im,yr-year[0]] = np.mean(latslpSH[np.argmax(mslpSH[im,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1)])
-
-      if tscale == 'ssn' :
-          for it in range(len(dt_slp)) :
-
-              cy = yr-datecyc(nt,0)
-
-              if issn == 'YYY':
-                  mons = np.arange(1,13)
-              if issn == 'MAM':
-                  mons = np.array([3,4,5])
-              if issn == 'JJA':
-                  mons = np.array([6,7,8])
-              if issn == 'SON':
-                  mons = np.array([9,10,11])
-              if issn == 'DJF':
-                  mons = np.array([1,2])
-
-              mons = mons-1
-
-              if not (issn == 'DJF' and cy==0) :
-
-                  if not issn == 'DJF':
-                      slp_z_mean = np.mean(slp_z[mons,:],axis=0)
-                      slpSHlon_mean = np.mean(mslpSHlon[mons,:,:],axis=0)
-                  else:
-                      slp_z_tmp = np.array([slp_zDec_pyr,slp_z[1,:],slp_z[2,:]])
-                      slp_z_mean = np.mean(slp_z_tmp,axis=0)
-                      slpSHlon_tmp = np.array([mslpSHlonDec_pyr,mslpSHlon[1,:,:],mslpSHlon[2,:,:]])
-                      slpSHlon_mean = np.mean(slpSHlon_tmp,axis=0)
-
-                  STR1slp[0,it,cy] = np.amax(slp_z_mean)
-                  STR1lat[0,it,cy] = latslpSH[np.argmax(slp_z_mean)]
-
-                  STR2slp[0,it,cy] = np.mean(np.amax(slpSHlon_mean,axis=0))
-                  STR2lat[0,it,cy] = np.mean(latslpSH[np.argmax(np.mean(mslpSHlon[mons,:,:],axis=0),axis=0)])
-
-              else : # for DJF in first year
-                  STR1slp[0,it,cy] = None
-                  STR1lat[0,it,cy] = None
-
-                  STR2slp[0,it,cy] = None
-                  STR2lat[0,it,cy] = None
-
-      slp_zDec_pyr = slp_zDec
-      mslpSHlonDec_pyr = mslpSHlonDec
-
-
-      nc.close()
-
+    # for yr in yrs:
+    #     STRlat_yr = np.zeros([ 1464, 3],dtype=np.float); STRlat_yr.fill(np.nan)
+    #     STRslp_yr = np.zeros_like(STRlat_yr); STRslp_yr.fill(np.nan)
+    #
+    #     STRlat = np.zeros((nt,nyrs,1464+lag*4*2+31*4),dtype=np.float); STRlat.fill(np.nan)
+    #     STRslp = np.zeros_like(STRlat); STRslp.fill(np.nan)
+    #     T_hr   = np.zeros((nt,nyrs,1464+lag*4*2+31*4),dtype=np.float); T_hr.fill(np.nan)
+    #
+    #
+    #
+    #     for slpyr in [yr,yr-1,yr+1]:
+    #         print slpyr, yr
+    #         fin = "/Users/Irina/work/DATA/ERAint/Mslp_highres/erain_hr.mslp.%d.10_70S.nc"%slpyr
+    #         print fin, os.path.isfile(fin)
+    #
+    #         if os.path.isfile(fin):
+    #             print "Slp from", fin
+    #             slpnc = Dataset(fin, 'r')
+    #
+    #             print slpnc.variables.keys()
+    #             if slpnc.variables.keys()[0]=="lon":
+    #               lonslp = slpnc.variables['lon'][:]
+    #               latslp = slpnc.variables['lat'][:]
+    #             elif slpnc.variables.keys()[0]=="longitude":
+    #               lonslp = slpnc.variables['longitude'][:]
+    #               latslp = slpnc.variables['latitude'][:]
+    #             else:
+    #              print"Check lon/lat names in the netcdf file, %d "%slpyr
+    #             time = slpnc.variables['time'][:]
+    #             mslp = slpnc.variables['msl'][:]/100.
+    #
+    #             dt_slp = [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
+    #                for t in time]
+    #             if slpyr == yr :
+    #                 ndt = len(dt_slp)
+    #
+    #             latslpSH  = latslp[np.logical_and(latslp<-20,latslp>-65)]
+    #             mslpSH    = mslp[:,np.logical_and(latslp<-20,latslp>-65),:]
+    #             mslpSHlon = mslpSH[:,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])]
+    #             # mslpSHlonDec = mslpSHlon[-1,:,:]
+    #
+    #             # zonal average
+    #             slp_z = np.mean(mslpSHlon,axis=2)
+    #
+    #             for it in np.arange(len(dt_slp)):
+    #                 STRslp_yr[it,slpyr-yr+1] = np.amax(slp_z[it,:])
+    #                 STRlat_yr[it,slpyr-yr+1] = latslpSH[np.argmax(slp_z[it,:])]
+    #
+    #             if slpyr == yr:
+    #                 tarr = np.arange((lag+31)*4,(lag+31)*4+len(dt_slp),1)
+    #                 STRlat[0,yr-yrs[0],tarr] = STRlat_yr[:len(dt_slp),slpyr-yr+1]
+    #                 STRslp[0,yr-yrs[0],tarr] = STRslp_yr[:len(dt_slp),slpyr-yr+1]
+    #                 T_hr[0,yr-yrs[0],tarr] = time
+    #
+    #             if slpyr == yr-1:
+    #                 tarr = np.arange(0,(lag+31)*4,1)
+    #                 STRlat[0,yr-yrs[0],tarr] = STRlat_yr[len(dt_slp)-(lag+31)*4:-1,slpyr-yr+1]
+    #                 STRslp[0,yr-yrs[0],tarr] = STRslp_yr[len(dt_slp)-(lag+31)*4:-1,slpyr-yr+1]
+    #                 T_hr[0,yr-yrs[0],tarr] = time[len(dt_slp)-lag*4:-1]
+    #
+    #             if slpyr == yr+1:
+    #                 # print "OK"
+    #                 tarr = np.arange(ndt+(lag+31)*4,ndt+lag*4*2+31*4,1)
+    #                 STRlat[0,yr-yrs[0],tarr] = STRlat_yr[:lag*4,slpyr-yr+1]
+    #                 STRslp[0,yr-yrs[0],tarr] = STRslp_yr[:lag*4,slpyr-yr+1]
+    #                 T_hr[0,yr-yrs[0],tarr] = time[:lag*4]
+    #                 # print ndt
+    #                 # print tarr
+    #                 # print time[:lag*4]
+    #
+    #     # print [t for t in T_hr]
+    #     # print [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
+    #     #    for t in T_hr[~np.isnan(T_hr)]]
+    #     # quit()
+    #
+    #     for iss,issn in enumerate(ssn[1:]):
+    #         if issn == 'YYY':
+    #           mons = np.arange(1,13)
+    #           dt1 = (datetime.datetime(yr, mons[0], 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+    #           dt2 = (datetime.datetime(yr+1, 1, 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+    #         if issn == 'MAM':
+    #           mons = np.array([3,4,5])
+    #           dt1 = (datetime.datetime(yr, mons[0], 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+    #           dt2 = (datetime.datetime(yr, mons[2]+1, 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+    #         if issn == 'JJA':
+    #           mons = np.array([6,7,8])
+    #           dt1 = (datetime.datetime(yr, mons[0], 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+    #           dt2 = (datetime.datetime(yr, mons[2]+1, 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+    #         if issn == 'SON':
+    #           mons = np.array([9,10,11])
+    #           dt1 = (datetime.datetime(yr, mons[0], 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+    #           dt2 = (datetime.datetime(yr, mons[2]+1, 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+    #         if issn == 'DJF':
+    #           mons = np.array([12,1,2])
+    #           dt1 = (datetime.datetime(yr-1, mons[0], 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+    #           dt2 = (datetime.datetime(yr, mons[2]+1, 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+    #
+    #         print ssn[iss+2]
+    #
+    #         t1 = int(dt1 // (3600))
+    #         t2 = int(dt2 // (3600))
+    #         # print t1,t2
+    #
+    #         t1_lag = t1-lag*24
+    #         t2_lag = t2+lag*24
+    #         # print "lagged t1,ts:",t1_lag,t2_lag
+    #
+    #         mask = np.logical_and(T_hr[0,yr-yrs[0],:]<t2_lag,T_hr[0,yr-yrs[0],:]>=t1_lag)
+    #         # print T_hr[mask]
+    #
+    #         T_ssn  = T_hr[0,yr-yrs[0],mask]
+    #         # print T_ssn
+    #         # print [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
+    #         #    for t in T_ssn]
+    #
+    #         m = T_ssn.size
+    #         STRlat[iss+1,yr-yrs[0],:m] = STRlat[0,yr-yrs[0],mask]-np.mean(STRlat[0,yr-yrs[0],mask])
+    #         STRslp[iss+1,yr-yrs[0],:m] = STRslp[0,yr-yrs[0],mask]-np.mean(STRslp[0,yr-yrs[0],mask])
+    #         T_hr[iss+1,yr-yrs[0],:m]   = T_hr[0,yr-yrs[0],mask]
+    #
+    #
+    #     slpnc.close()
+    #
     # write max/min STR years to a file
-    for it in np.arange(nt):
-        print tperiod[it+1],STR1slp[0,it,:]
-        fSTRint = "../output/STRint.%s.%s%d_%d.txt"%(reg,tperiod[it+1],year[0],year[1]-1)
-        with open(fSTRint, "w") as text_file:
-            text_file.write("{:>7}{:>7}{:>7}{:>7}\n".format("STRmax",  "Yrmax",  "STRmin",   "Yrmin"))
-
-            nsel = 10
-            top = (-STR1slp[0,it,:]).argsort()[:nsel]
-            bottom = (STR1slp[0,it,:]).argsort()[:nsel]
-
-            for i in range(nsel):
-                text_file.write("{0[0]:.2f} {0[1]:6d} {0[2]:.2f} {0[3]:6d}\n".format([STR1slp[0,it,top][i],yrs[top][i],STR1slp[0,it,bottom][i],yrs[bottom][i]]))
-
-        fSTRlat = "../output/STRloc.%s.%s%d_%d.txt"%(reg,tperiod[it+1],year[0],year[1]-1)
-        with open(fSTRlat, "w") as text_file:
-            text_file.write("{:>7}{:>7}{:>7}{:>7}\n".format("STRmax",  "Yrmax",  "STRmin",   "Yrmin"))
-
-            nsel = 10
-            top = (STR1lat[0,it,:]).argsort()[:nsel]
-            bottom = (-STR1lat[0,it,:]).argsort()[:nsel]
-
-            for i in range(nsel):
-                text_file.write("{0[0]:.2f} {0[1]:6d} {0[2]:.2f} {0[3]:6d}\n".format([STR1lat[0,it,top][i],yrs[top][i],STR1lat[0,it,bottom][i],yrs[bottom][i]]))
-
+    # for it in np.arange(nt):
+    #     print tperiod[it+1],STR1slp[0,it,:]
+    #     fSTRint = "../output/STRint.%s.%s%d_%d.txt"%(reg,tperiod[it+1],year[0],year[1]-1)
+    #     with open(fSTRint, "w") as text_file:
+    #         text_file.write("{:>7}{:>7}{:>7}{:>7}\n".format("STRmax",  "Yrmax",  "STRmin",   "Yrmin"))
+    #
+    #         nsel = 10
+    #         top = (-STR1slp[0,it,:]).argsort()[:nsel]
+    #         bottom = (STR1slp[0,it,:]).argsort()[:nsel]
+    #
+    #         for i in range(nsel):
+    #             text_file.write("{0[0]:.2f} {0[1]:6d} {0[2]:.2f} {0[3]:6d}\n".format([STR1slp[0,it,top][i],yrs[top][i],STR1slp[0,it,bottom][i],yrs[bottom][i]]))
+    #
+    #     fSTRlat = "../output/STRloc.%s.%s%d_%d.txt"%(reg,tperiod[it+1],year[0],year[1]-1)
+    #     with open(fSTRlat, "w") as text_file:
+    #         text_file.write("{:>7}{:>7}{:>7}{:>7}\n".format("STRmax",  "Yrmax",  "STRmin",   "Yrmin"))
+    #
+    #         nsel = 10
+    #         top = (STR1lat[0,it,:]).argsort()[:nsel]
+    #         bottom = (-STR1lat[0,it,:]).argsort()[:nsel]
+    #
+    #         for i in range(nsel):
+    #             text_file.write("{0[0]:.2f} {0[1]:6d} {0[2]:.2f} {0[3]:6d}\n".format([STR1lat[0,it,top][i],yrs[top][i],STR1lat[0,it,bottom][i],yrs[bottom][i]]))
+    #
         # quit()
 
-    # # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # #  Fronts
-    # # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #
-    # for yr in yrs:
-    #   fin = "../frontgrd/frline.%d.nc"%yr
-    #   print "fronts from %s"%fin
-    #   ncf = Dataset(fin, 'r')
-    #
-    #   print ncf.variables.keys()
-    #   flon = ncf.variables['flon'][:]
-    #   flat = ncf.variables['flat'][:]
-    #   time = ncf.variables['time'][:]
-    #   dv = ncf.variables['dv'][:]
-    #   nf = ncf.variables['nfr'][:]
-    #   npts = ncf.variables['npts'][:]
-    #
-    #   fdt = [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
-    #        for t in time]
-    #
-    #
-    #   if np.any(nf>maxnf) :
-    #     print np.amax(nf)
-    #     print "ERROR: nf > maxnf"
-    #     quit()
-    #
-    #   if np.any(npts > maxnp) :
-    #     print np.amax(npts)
-    #     print "ERROR:  np > maxnp"
-    #     quit()
-    #
-    #   # ************************************************
-    #   # masking
-    #   # ************************************************
-    #   # create mask
-    #
-    #   for ind,t in enumerate(fdt):
-    #     if t.year == yr and t.month==1 and t.day == 1 and t.hour == 0:
-    #        tfr1 = ind
-    #     if t.year == yr and t.month==12 and t.day == 31 and t.hour == 18:
-    #        tfr2 = ind
-    #        break
-    #
-    #   if yr == year[0]:
-    #       if calendar.isleap(yr):
-    #           frmask = np.zeros((nyrs,tfr2-tfr1+1,maxnf),dtype=np.int)
-    #           frdv  = np.zeros((nyrs,tfr2-tfr1+1,maxnf),dtype=np.float)
-    #           frmask_it = np.zeros((nt,nyrs,tfr2-tfr1+1,maxnf),dtype=np.int)
-    #           frdv_it  = np.zeros((nt,nyrs,tfr2-tfr1+1,maxnf),dtype=np.float)
-    #       else:
-    #           frmask = np.zeros((nyrs,tfr2-tfr1+5,maxnf),dtype=np.int)
-    #           frdv   = np.zeros((nyrs,tfr2-tfr1+5,maxnf),dtype=np.float32)
-    #           frmask_it = np.zeros((nt,nyrs,tfr2-tfr1+5,maxnf),dtype=np.int)
-    #           frdv_it   = np.zeros((nt,nyrs,tfr2-tfr1+5,maxnf),dtype=np.float32)
-    #       frNPlat = np.zeros_like(frdv)
-    #       frNPlat_it = np.zeros_like(frdv_it)
-    #
-    #
-    #   for ct in np.arange(tfr1,tfr2+1):
-    #       if fdt[ct].year>=year[0] and fdt[ct].year<=year[1]:
-    #             for ifr in range(nf[ct]):
-    #               if ifr+1>=nf1 and ifr+1<=nf2:
-    #                   for ip in range(npts[ct,ifr]):
-    #                       if flat[ct,ifr,ip]>=lat[0] and flat[ct,ifr,ip]<=lat[1]:
-    #                           if flon[ct,ifr,ip]>=lon[0] and flon[ct,ifr,ip]<=lon[1]:
-    #                               frmask[yr-year[0],ct-tfr1,ifr] = fdt[ct].month
-    #                               frdv[yr-year[0],ct-tfr1,ifr] = np.sum(dv[ct,ifr,:npts[ct,ifr]])
-    #                               frNPlat[yr-year[0],ct-tfr1,ifr] = np.amax(flat[ct,ifr,:npts[ct,ifr]])
-    #                               break
-    #
-    #
-    #
-    # # ************************************************
-    # # front stats
-    # # ************************************************
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    #  Fronts
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    frN = np.zeros([nt,nyrs,1464+31*4],dtype=np.float); frN.fill(np.nan)
+    frT = np.zeros([nt,nyrs,1464+31*4],dtype=np.float); frT.fill(np.nan)
+
+    for yr in yrs:
+      fin = "../frontgrd/frline.%d.nc"%yr
+      print "fronts from %s"%fin
+      ncf = Dataset(fin, 'r')
+
+      print ncf.variables.keys()
+      flon = ncf.variables['flon'][:]
+      flat = ncf.variables['flat'][:]
+      time = ncf.variables['time'][:]
+      dv = ncf.variables['dv'][:]
+      nf = ncf.variables['nfr'][:]
+      npts = ncf.variables['npts'][:]
+
+      fdt = [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
+           for t in time]
+
+
+      if np.any(nf>maxnf) :
+        print np.amax(nf)
+        print "ERROR: nf > maxnf"
+        quit()
+
+      if np.any(npts > maxnp) :
+        print np.amax(npts)
+        print "ERROR:  np > maxnp"
+        quit()
+
+      # ************************************************
+      # masking
+      # ************************************************
+      # create mask
+
+      for ind,t in enumerate(fdt):
+        if t.year == yr and t.month==1 and t.day == 1 and t.hour == 0:
+           tfr1 = ind
+        if t.year == yr and t.month==12 and t.day == 31 and t.hour == 18:
+           tfr2 = ind
+           break
+
+      if yr == year[0]:
+          if calendar.isleap(yr):
+              frmask = np.zeros((nyrs,tfr2-tfr1+1,maxnf),dtype=np.int)
+              frdv  = np.zeros((nyrs,tfr2-tfr1+1,maxnf),dtype=np.float)
+              frmask_it = np.zeros((nt,nyrs,tfr2-tfr1+1,maxnf),dtype=np.int)
+              frdv_it  = np.zeros((nt,nyrs,tfr2-tfr1+1,maxnf),dtype=np.float)
+          else:
+              frmask = np.zeros((nyrs,tfr2-tfr1+5,maxnf),dtype=np.int)
+              frdv   = np.zeros((nyrs,tfr2-tfr1+5,maxnf),dtype=np.float32)
+              frmask_it = np.zeros((nt,nyrs,tfr2-tfr1+5,maxnf),dtype=np.int)
+              frdv_it   = np.zeros((nt,nyrs,tfr2-tfr1+5,maxnf),dtype=np.float32)
+          frNPlat = np.zeros_like(frdv)
+          frNPlat_it = np.zeros_like(frdv_it)
+
+
+      for ct in np.arange(tfr1,tfr2+1):
+          if fdt[ct].year>=year[0] and fdt[ct].year<=year[1]:
+                for ifr in range(nf[ct]):
+                  if ifr+1>=nf1 and ifr+1<=nf2:
+                      for ip in range(npts[ct,ifr]):
+                          if flat[ct,ifr,ip]>=lat[0] and flat[ct,ifr,ip]<=lat[1]:
+                              if flon[ct,ifr,ip]>=lon[0] and flon[ct,ifr,ip]<=lon[1]:
+                                  frmask[yr-year[0],ct-tfr1,ifr] = time[ct]
+                                  frdv[yr-year[0],ct-tfr1,ifr] = np.sum(dv[ct,ifr,:npts[ct,ifr]])
+                                  frNPlat[yr-year[0],ct-tfr1,ifr] = np.amax(flat[ct,ifr,:npts[ct,ifr]])
+                                  break
+
+      for it in np.arange(len(time)):
+        #   print  fdt[it], " ",np.sum(np.where(frmask[yr-year[0],:,:]==time[it],1,0))
+          frN[0,yr-year[0],it+31*4] = np.sum(np.where(frmask[yr-year[0],:,:]==time[it],1,0))
+          frT[0,yr-year[0],it+31*4] = time[it]
+
+      if yr-year[0]+1 < nyrs:
+          for it in np.arange(len(time)-31*4,len(time)):
+            #   print  fdt[it], " ",np.sum(np.where(frmask[yr-year[0],:,:]==time[it],1,0))
+              print 0,yr-year[0]+1,it-len(time)+31*4
+              print frN.shape
+              frN[0,yr-year[0]+1,it-len(time)+31*4] = np.sum(np.where(frmask[yr-year[0],:,:]==time[it],1,0))
+              frT[0,yr-year[0]+1,it-len(time)+31*4] = time[it]
+
+      for iss,issn in enumerate(ssn[1:]):
+        if issn == 'YYY':
+          mons = np.arange(1,13)
+          dt1 = (datetime.datetime(yr, mons[0], 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+          dt2 = (datetime.datetime(yr+1, 1, 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+        if issn == 'MAM':
+          mons = np.array([3,4,5])
+          dt1 = (datetime.datetime(yr, mons[0], 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+          dt2 = (datetime.datetime(yr, mons[2]+1, 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+        if issn == 'JJA':
+          mons = np.array([6,7,8])
+          dt1 = (datetime.datetime(yr, mons[0], 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+          dt2 = (datetime.datetime(yr, mons[2]+1, 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+        if issn == 'SON':
+          mons = np.array([9,10,11])
+          dt1 = (datetime.datetime(yr, mons[0], 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+          dt2 = (datetime.datetime(yr, mons[2]+1, 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+        if issn == 'DJF':
+          mons = np.array([12,1,2])
+          dt1 = (datetime.datetime(yr-1, mons[0], 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+          dt2 = (datetime.datetime(yr, mons[2]+1, 1, 0)-datetime.datetime(1900, 1, 1, 0)).total_seconds()
+
+        print ssn[iss+1]
+
+        t1 = int(dt1 // (3600))
+        t2 = int(dt2 // (3600))
+        # print t1,t2
+
+
+        mask = np.logical_and(frT[0,yr-year[0],:]<t2,frT[0,yr-year[0],:]>=t1)
+        # print T_hr[mask]
+
+        T_ssn  = frT[0,yr-year[0],mask]
+        print T_ssn
+        print [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
+           for t in T_ssn]
+
+        m = T_ssn.size
+        frN[iss+1,yr-yrs[0],:m] = frN[0,yr-year[0],mask]
+        frT[iss+1,yr-yrs[0],:m ]= frT[0,yr-year[0],mask]
+
+
+
+
+      quit()
+
+      corr: frT[iss,yr-yrs[0],:]
+
+
+
+    # ************************************************
+    # front stats
+    # ************************************************
+
+
+
     # if tscale == 'mon':
     #     for it in np.arange(nt):
     #         frmask_it[it,:,:,:] = np.where(frmask==it+1,1,0)
