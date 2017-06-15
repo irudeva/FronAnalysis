@@ -161,7 +161,7 @@ fig2 = 11
 
 hs = "SH"
 # reg
-nreg = 5
+nreg = 0
 
 cc = np.zeros((nreg+1,nfig+1,2,nt),dtype=np.float) # correlation
 
@@ -211,7 +211,7 @@ for ireg in np.arange(nreg+1):
 
     for yr in yrs:
       slpyr = yr
-      fin = "/Users/irudeva/work/DATA/ERAint/Mslp_highres/erain.mslp.avm.%d.nc"%slpyr
+      fin = "/Users/irudeva/work/DATA/ERAint/Mslp_highres/erain_hr.slp.%d.10_70S.nc"%slpyr
       print "Slp from", fin
       nc = Dataset(fin, 'r')
 
@@ -232,15 +232,17 @@ for ireg in np.arange(nreg+1):
           latslp = nc.variables['lat'][:]
       elif nc.variables.keys()[0]=="longitude":
           lonslp = nc.variables['longitude'][:]
-          latslp = nc.variables['lattitude'][:]
+          latslp = nc.variables['latitude'][:]
       else:
          print"Check lon/lat names in the netcdf file, %d "%yr
       time = nc.variables['time'][:]
       mslp = nc.variables['msl'][:]/100.
 
-      dt_nc = [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
+      dt_slp = [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
            for t in time]
-      print dt_nc[1].year
+      print dt_slp[1].year
+      print len(dt_slp)
+      quit()
 
 
       latslpSH  = latslp[np.logical_and(latslp<-20,latslp>-65)]
@@ -250,10 +252,10 @@ for ireg in np.arange(nreg+1):
 
       # zonal average
       slp_z = np.mean(mslpSHlon,axis=2)
-      slp_zDec = np.mean(mslpSHlon[-1,:,:],axis=1)
+    #   slp_zDec = np.mean(mslpSHlon[-1,:,:],axis=1)
 
       if yr==year[0]:
-          STR1slp = np.zeros((2,nt,nyrs),dtype=np.float)
+          STR1slp = np.zeros((2,nt,nyrs,),dtype=np.float)
           STR1lat = np.zeros_like(STR1slp)
           STR1slp_tr = np.zeros((2,nt),dtype=np.float)
           STR1lat_tr = np.zeros_like(STR1slp_tr)
@@ -266,7 +268,7 @@ for ireg in np.arange(nreg+1):
 
       if tscale == 'mon' :
           for im in np.arange(slp_z[:,0].size):
-            #   print dt_nc[im].month
+            #   print dt_slp[im].month
               STR1slp[0,im,yr-year[0]] = np.amax(slp_z[im,:])
               STR1lat[0,im,yr-year[0]] = latslpSH[np.argmax(slp_z[im,:])]
 
@@ -274,8 +276,10 @@ for ireg in np.arange(nreg+1):
               STR2lat[0,im,yr-year[0]] = np.mean(latslpSH[np.argmax(mslpSH[im,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1)])
 
       if tscale == 'ssn' :
-          for it,issn in enumerate(ssn[1:]) :
-              cy = yr-year[0]
+          for it in range(len(dt_slp)) :
+
+              cy = yr-datecyc(nt,0)
+
               if issn == 'YYY':
                   mons = np.arange(1,13)
               if issn == 'MAM':

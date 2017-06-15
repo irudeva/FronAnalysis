@@ -13,50 +13,57 @@ ssnarr=(/"YYY","DJF","MAM","JJA","SON"/)
 
 hs =(/"NH","SH"/)
 ;hs = "NH"
+do ihs =1,1
 
 STRarr = (/"STRloc", "STRint"/)
 sel = (/"max","min"/)
 do istr = 0,1
   STR = STRarr(istr)
-  do ireg=0,09
+  do ireg=0,5
       if( ireg .eq. 0) then
           rlon = (/ -90,361/)
           rlat = (/ -40,-20/)
           reg = abs(rlat(1))+"_"+abs(rlat(0))+"S"
+          regtitle = hs(ihs)
       end if
 
       if (ireg .eq. 1)then
           rlon = (/ 30,90/)
           rlat = (/ -40,-20/)
           reg = abs(rlon(0))+"_"+abs(rlon(1))+"E."+abs(rlat(1))+"_"+abs(rlat(0))+"S"
+          regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
         end if
 
       if (ireg .eq. 2)then
           rlon = (/ 90,150/)
           rlat = (/ -40,-20/)
           reg = abs(rlon(0))+"_"+abs(rlon(1))+"E."+abs(rlat(1))+"_"+abs(rlat(0))+"S"
+          regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
         end if
 
       if (ireg .eq. 3)then
           rlon = (/ 150,210/)
           rlat = (/ -40,-20/)
           reg = abs(rlon(0))+"_"+abs(rlon(1))+"E."+abs(rlat(1))+"_"+abs(rlat(0))+"S"
+          regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
         end if
 
       if (ireg .eq. 4)then
           rlon = (/ 210,285/)
           rlat = (/ -40,-20/)
           reg = abs(rlon(0))+"_"+abs(rlon(1))+"E."+abs(rlat(1))+"_"+abs(rlat(0))+"S"
+          regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
         end if
 
       if (ireg .eq. 5)then
           rlon = (/ 300,340/)
           rlat = (/ -40,-20/)
           reg = abs(rlon(0))+"_"+abs(rlon(1))+"E."+abs(rlat(1))+"_"+abs(rlat(0))+"S"
+          regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
         end if
 
 
-  do issn = 0,0
+  do issn = 0,4
 
     ssn = ssnarr(issn)
 
@@ -75,7 +82,7 @@ do istr = 0,1
     ; read years
     fyrs = "../output/STRyrs/"+STR+"."+reg+"."+ssn+year(0)+"_"+year(1)+".txt"
     print ("read years from "+fyrs)
-    z1 = asciiread(fyrs,(/5,4/),"float")
+    z1 = asciiread(fyrs,(/10,4/),"float")
 
     yrs1 = z1(:,1)
     yrs2 = z1(:,3)
@@ -103,7 +110,6 @@ do istr = 0,1
 
 
 
-  do ihs =1,1
   ;************************************************
   ; Plotting - preparation
   ;************************************************
@@ -114,7 +120,8 @@ do istr = 0,1
   ;              sprinti("%0.2i", dd(1)) +"_"+sprinti("%0.2iZ", hr(1))
 
   regstr = reg+hs(ihs)
-  wks = gsn_open_wks("png","../output/FNPnum_"+STR+"."+reg+"."+ssn+year(0)+"_"+year(1) )                  ; send graphics to PNG file
+  ; wks = gsn_open_wks("png","../output/FNPnum_"+STR+"."+reg+"."+ssn+year(0)+"_"+year(1) )                  ; send graphics to PNG file
+  wks = gsn_open_wks("png","../output/STRyrs/frNall_STR/frN_"+STR+"10."+reg+"."+ssn+year(0)+"_"+year(1) )                  ; send graphics to PNG file
 
   res = True
   resd = True
@@ -123,7 +130,6 @@ do istr = 0,1
 
 
   res@cnFillOn            = True        ; Turn on contour fill
-  res@cnLinesOn           = True       ; Turn on/off contour lines
   res@cnFillPalette       = "WhiteBlueGreenYellowRed"  ; Set color map
 
   res@gsnPolar   = hs(ihs)
@@ -151,34 +157,32 @@ do istr = 0,1
 
 
 
-  ; resd@cnLevelSelectionMode = "ManualLevels"
-  ; if (ssn.eq."YYY")then
-  ;   res@cnMinLevelValF   = 0.
-  ;   res@cnMaxLevelValF   = 90.
-  ;   res@cnLevelSpacingF  = 10.
-  ; else
-  ;   res@cnMinLevelValF   = 2.5
-  ;   res@cnMaxLevelValF   = 30.
-  ;   res@cnLevelSpacingF  = 2.5
-  ; end if
+  resd@cnLevelSelectionMode = "ManualLevels"
+  if (ssn.eq."YYY")then
+    res@cnMinLevelValF   = 0.
+    res@cnMaxLevelValF   = 25.
+    res@cnLevelSpacingF  = 2.
+  else
+    res@cnMinLevelValF   = 0.
+    res@cnMaxLevelValF   = 8.
+    res@cnLevelSpacingF  = .5
+  end if
 
   ; for diff
   resd = res
   resd@cnFillPalette       = "BlueDarkRed18"  ; Set color map
 
   ;res@cnLevelSelectionMode = "AutomaticLevels"
-  ; resd@cnLevelSelectionMode = "ManualLevels"
-  ; if (ssn.eq."YYY")then
-  ;   resd@cnMinLevelValF   = -20.
-  ;   resd@cnMaxLevelValF   = 20.
-  ;   resd@cnLevelSpacingF  = 2.
-  ; else
-  ;   resd@cnMinLevelValF   = -10.
-  ;   resd@cnMaxLevelValF   = 10.
-  ;   resd@cnLevelSpacingF  = 1.
-  ; end if
-
-  resd@tiMainString        = "Trend in the number of fronts per "+ssn
+  resd@cnLevelSelectionMode = "ManualLevels"
+  if (ssn.eq."YYY")then
+    resd@cnMinLevelValF   = -5.
+    resd@cnMaxLevelValF   = 5.
+    resd@cnLevelSpacingF  = .5
+  else
+    resd@cnMinLevelValF   = -2.
+    resd@cnMaxLevelValF   = 2.
+    resd@cnLevelSpacingF  = .2
+  end if
 
 
   plot = new(3,graphic)                          ; create a plot array
@@ -257,32 +261,28 @@ do istr = 0,1
 
                 ; for all data points
                 ; frgrd(nsel,iyr,:,:) = frgrd(nsel,iyr,:,:)+where(frloc(nt,:,:).gt.0, 1, 0)
+                frgrd(nsel,iyr,:,:) = frgrd(nsel,iyr,:,:)+where(frarea(nt,:,:).gt.0, .333, 0)
                 ; for NFP
-                do ifr =1,maxfrN
-                     Nfr = 0
-                     Nfr = num(frloc(nt,ind(lat<0),:).eq.ifr)
-                    ;  print (ifr+"Nfr="+Nfr)
-                     if (Nfr .gt. 0)then
-                      ;  print (ifr+ " "+Nfr)
-                      ;  print (ind(lat.eq.0)+" "+dimsizes(lat))
-                       do ilat =ind(lat.eq.0),dimsizes(lat)-1
-                        ;  print (lat(ilat))
-                         if (num(frloc(nt,ilat,:).eq.ifr).eq.1)then
-                            ilon =  ind(frloc(nt,ilat,:).eq.ifr)
-                            ; print(cyr+" "+datent(nt,1)+" "+datent(nt,2)+" "+datent(nt,3)+" "+ifr+" "+lat(ilat)+" "+lon(ilon))
-                            frgrd(nsel,iyr,ilat,ilon) = frgrd(nsel,iyr,ilat,ilon)+1
-                            ntstp  = ntstp + 1
-                            break
-                         end if
-                       end do
-
-                     end if
-                     ;
-                    ;  if (Nfr .eq. 0)then
-                    ;    print ("breaking at "+ ifr)
-                    ;    break
-                    ;  end if
-                   end do
+                ; do ifr =1,maxfrN
+                ;      Nfr = 0
+                ;      Nfr = num(frloc(nt,ind(lat<0),:).eq.ifr)
+                ;     ;  print (ifr+"Nfr="+Nfr)
+                ;      if (Nfr .gt. 0)then
+                ;       ;  print (ifr+ " "+Nfr)
+                ;       ;  print (ind(lat.eq.0)+" "+dimsizes(lat))
+                ;        do ilat =ind(lat.eq.0),dimsizes(lat)-1
+                ;         ;  print (lat(ilat))
+                ;          if (num(frloc(nt,ilat,:).eq.ifr).eq.1)then
+                ;             ilon =  ind(frloc(nt,ilat,:).eq.ifr)
+                ;             ; print(cyr+" "+datent(nt,1)+" "+datent(nt,2)+" "+datent(nt,3)+" "+ifr+" "+lat(ilat)+" "+lon(ilon))
+                ;             frgrd(nsel,iyr,ilat,ilon) = frgrd(nsel,iyr,ilat,ilon)+1
+                ;             ntstp  = ntstp + 1
+                ;             break
+                ;          end if
+                ;        end do
+                ;
+                ;      end if
+                ;    end do
 
                end if
 
@@ -324,7 +324,7 @@ do istr = 0,1
     ;************************************************
 
    print ("Start plotting")
-   print (ntstp)
+   print ("ntstp="+ntstp)
 
    ; twist!!!
     ; tmpgrd = frgrd
@@ -356,17 +356,22 @@ do istr = 0,1
    avfrgrd = dim_avg_n_Wrap(frgrd,1)
 
    do nsel =0,1
-      ; printVarSummary(avfrgrd)
-      ;frgrd = frgrd*100/ntstp
+     if(nsel .eq. 0) then
+        yrs = yrs1
+     end if
+     if(nsel .eq. 1) then
+        yrs = yrs2
+     end if
 
       regfrgrd = avfrgrd(nsel,:,:)
-      regfrgrd = 0
+      ; regfrgrd = 0
       ; regfrgrd(ind(lat.gt.rlat(0).and.lat.le.rlat(1)),ind(lon.gt.rlon(0).and.lon.le.rlon(1))) = avfrgrd(nsel,ind(lat.gt.rlat(0).and.lat.le.rlat(1)),ind(lon.gt.rlon(0).and.lon.le.rlon(1)))
-      regfrgrd(:,ind(lon.gt.rlon(0).and.lon.le.rlon(1))) = avfrgrd(nsel,:,ind(lon.gt.rlon(0).and.lon.le.rlon(1)))
+      ; regfrgrd(:,ind(lon.gt.rlon(0).and.lon.le.rlon(1))) = avfrgrd(nsel,:,ind(lon.gt.rlon(0).and.lon.le.rlon(1)))
 
       wrf_smooth_2d(regfrgrd,3)
-      res@tiMainString        = STR+"  "+sel(nsel)+"  "+ssn+ "  "+ reg
-      res@gsnLeftString       = yrs(0)+" "+yrs(1)+" "+yrs(2)+" "+yrs(3)+" "+yrs(4)
+      res@tiMainString        = "fronts in "+STR+"  "+sel(nsel)+"  "+ssn+ "  "+ reg
+
+      res@gsnLeftString =str_concat(sprinti("%5.0i", toint(yrs)))
       plot(nsel) = gsn_csm_contour_map_polar(wks,regfrgrd,res)
 
     end do
@@ -374,12 +379,13 @@ do istr = 0,1
   ; draw(plot1)
   ; frame(wks)
 
-  ; plot trends
+  ; plot diff
   print ("      difference..")
 
   diff = avfrgrd(0,:,:)-avfrgrd(1,:,:)
   wrf_smooth_2d(diff,3)
   copy_VarMeta(regfrgrd,diff)
+
 
   resd@tiMainString        = STR+" "+sel(0) +"-"+ sel(1)+", "+ssn+ "  "+ reg
 
@@ -391,16 +397,16 @@ do istr = 0,1
   ;************************************************
     resP                    = True                 ; modify the panel plot
     ; resP@gsnPanelMainString = "A common title"     ; new resource added in NCL V6.4.0
-    resP@txString           = STR +" "+sel(0) +"-"+ sel(1)+", "+ ssn + "  "+ reg
+    resP@txString           = "fr N: "+STR +" "+sel(0) +"-"+ sel(1)+", "+ ssn + "  "+ regtitle
     gsn_panel(wks,plot,(/2,2/),resP)               ; now draw as one plot
 
   delete(plot)
 
-  end do ; ihs
+  end do ; years
   delete(frgrd)
   delete(yrs)
-  end do ; years
  end do ; ssn
-end do ; STR
 end do ; reg
+end do ; STR
+end do ; ihs
 end
