@@ -217,12 +217,15 @@ for ireg in np.arange(nreg+1):
     STRslp = np.zeros_like(STRlat); STRslp.fill(np.nan)
     T_hr   = np.zeros((nt,nyrs,1464+lag*4*2+31*4),dtype=np.float); T_hr.fill(np.nan)
 
+    STRslp_clim = np.zeros((12,31,4,nyrs),dtype=np.float);STRslp_clim.fill(np.nan)
+    STRlat_clim = np.zeros_like(STRslp_clim);STRlat_clim.fill(np.nan)
+
     for yr in yrs:
 
 
         for slpyr in [yr,yr-1,yr+1]:
             print "STR %d for %d "%(slpyr,yr)
-            fin = "/Users/Irina/work/DATA/ERAint/Mslp_highres/erain_hr.mslp.%d.10_70S.nc"%slpyr
+            fin = "/Users/irudeva/work/DATA/ERAint/Mslp_highres/erain_hr.mslp.%d.10_70S.nc"%slpyr
             print fin, os.path.isfile(fin)
 
             if os.path.isfile(fin):
@@ -261,11 +264,16 @@ for ireg in np.arange(nreg+1):
                     STRslp_yr[it] = np.amax(slp_z[it,:])
                     STRlat_yr[it] = latslpSH[np.argmax(slp_z[it,:])]
 
+                    if slpyr <= year[1]-1:
+                        STRslp_clim[dt_slp[it].month-1,dt_slp[it].day-1,dt_slp[it].hour/6-1,slpyr-year[0]]=STRslp_yr[it]
+                        STRlat_clim[dt_slp[it].month-1,dt_slp[it].day-1,dt_slp[it].hour/6-1,slpyr-year[0]]=STRlat_yr[it]
+
                 if slpyr == yr:
                     tarr = np.arange((lag+31)*4,(lag+31)*4+ndt,1)
                     STRlat[0,yr-yrs[0],tarr] = STRlat_yr[:ndt]
                     STRslp[0,yr-yrs[0],tarr] = STRslp_yr[:ndt]
                     T_hr[0,yr-yrs[0],tarr] = time[:len(dt_slp)]
+
 
                 if slpyr == yr-1:
                     tarr = np.arange(0,(lag+31)*4,1)
@@ -327,13 +335,34 @@ for ireg in np.arange(nreg+1):
             #    for t in T_ssn]
 
             m = T_ssn.size
-            STRlat[iss+1,yr-yrs[0],:m] = STRlat[0,yr-yrs[0],mask]-np.mean(STRlat[0,yr-yrs[0],mask])
-            STRslp[iss+1,yr-yrs[0],:m] = STRslp[0,yr-yrs[0],mask]-np.mean(STRslp[0,yr-yrs[0],mask])
+            # STRlat[iss+1,yr-yrs[0],:m] = STRlat[0,yr-yrs[0],mask]-np.mean(STRlat[0,yr-yrs[0],mask])
+            # STRslp[iss+1,yr-yrs[0],:m] = STRslp[0,yr-yrs[0],mask]-np.mean(STRslp[0,yr-yrs[0],mask])
+            STRlat[iss+1,yr-yrs[0],:m] = STRlat[0,yr-yrs[0],mask]
+            STRslp[iss+1,yr-yrs[0],:m] = STRslp[0,yr-yrs[0],mask]
             T_hr[iss+1,yr-yrs[0],:m]   = T_hr[0,yr-yrs[0],mask]
 
 
 
         slpnc.close()
+
+
+
+    # to subtract the daily average
+
+    for yr in yrs:
+        for iss,issn in enumerate(ssn[1:]):
+            for ct,it in enumerate(T_hr[iss+1,yr-yrs[0],:]):
+                if ~np.isnan(it):
+                    date = datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(it))
+                    # if date.month==2 and date.day==29:
+                    #     print date
+                    #     print STRslp[iss+1,yr-yrs[0],ct]
+                    #     print STRslp_clim[date.month-1,date.day-1,date.hour/6-1,:]
+                    #     print STRslp[iss+1,yr-yrs[0],ct] - np.mean(STRslp_clim[date.month-1,date.day-1,date.hour/6-1,~np.isnan(STRslp_clim[date.month-1,date.day-1,date.hour/6-1,:])])
+                    #     quit()
+                    STRslp[iss+1,yr-yrs[0],ct] = STRslp[iss+1,yr-yrs[0],ct] - np.mean(STRslp_clim[date.month-1,date.day-1,date.hour/6-1,~np.isnan(STRslp_clim[date.month-1,date.day-1,date.hour/6-1,:])])
+                    STRlat[iss+1,yr-yrs[0],ct] = STRlat[iss+1,yr-yrs[0],ct] - np.mean(STRlat_clim[date.month-1,date.day-1,date.hour/6-1,~np.isnan(STRlat_clim[date.month-1,date.day-1,date.hour/6-1,:])])
+
 
 
     # write max/min STR years to a file
@@ -448,6 +477,9 @@ for ireg in np.arange(nreg+1):
         frN = np.zeros([nt,nyrs,stfr],dtype=np.float); frN.fill(np.nan)
         frT = np.zeros([nt,nyrs,stfr],dtype=np.float); frT.fill(np.nan)
 
+        frN_clim = np.zeros((12,31,4,nyrs),dtype=np.float);frN_clim.fill(np.nan)
+
+
 
       for ct in np.arange(tfr1,tfr2+1):
           if fdt[ct].year>=year[0] and fdt[ct].year<=year[1]:
@@ -465,6 +497,9 @@ for ireg in np.arange(nreg+1):
       for ct in np.arange(tfr1,tfr2+1):
           frN[0,yr-year[0],tfr0+(ct-tfr1)] = np.sum(np.where(frmask[yr-year[0],:,:]==time[ct],1,0))
           frT[0,yr-year[0],tfr0+(ct-tfr1)] = time[ct]
+
+          frN_clim[fdt[ct].month-1,fdt[ct].day-1,fdt[ct].hour/6-1,yr-year[0]]=frN[0,yr-year[0],tfr0+(ct-tfr1)]
+
         #   print ct,tfr0+(ct-tfr1),fdt[ct],time[ct],frT[0,yr-year[0],tfr0+(ct-tfr1)],frN[0,yr-year[0],tfr0+(ct-tfr1)], tfr0
 
     #   if yr-year[0]+1 < nyrs:
@@ -512,18 +547,27 @@ for ireg in np.arange(nreg+1):
         #    for t in T_ssn]
 
         m = T_ssn.size
-        frN[iss+1,yr-yrs[0],:m] = frN[0,yr-year[0],mask]-np.mean(frN[0,yr-year[0],mask])
+        # frN[iss+1,yr-yrs[0],:m] = frN[0,yr-year[0],mask]-np.mean(frN[0,yr-year[0],mask])
+        frN[iss+1,yr-yrs[0],:m] = frN[0,yr-year[0],mask]
         frT[iss+1,yr-yrs[0],:m ]= frT[0,yr-year[0],mask]
+
+    # to subtract daily means
+    for yr in yrs:
+        for iss,issn in enumerate(ssn[1:]):
+            for ct,it in enumerate(frT[iss+1,yr-yrs[0],:]):
+                if ~np.isnan(it):
+                    date = datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(it))
+                    frN[iss+1,yr-yrs[0],ct] = frN[iss+1,yr-yrs[0],ct] - np.mean(frN_clim[date.month-1,date.day-1,date.hour/6-1,:])
 
     # ************************************************
     # flattening and correlation
     # ************************************************
     corr= np.zeros([2,nt,lag*8+1],dtype = np.float)
 
-    for iv,STR in enumerate(["STRlat","STRslp"]):
-        if STR == "STRlat":
+    for iv,STRsel in enumerate(["STRlat","STRslp"]):
+        if STRsel == "STRlat":
             STR = STRlat
-        elif STR == "STRslp":
+        elif STRsel == "STRslp":
             STR = STRslp
 
 
@@ -577,6 +621,7 @@ for ireg in np.arange(nreg+1):
     # #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # # Plotting
     # # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    print "start plotting..."
 
     # majorLocator = MultipleLocator(5)
     # majorFormatter = FormatStrFormatter('%d')
@@ -596,17 +641,21 @@ for ireg in np.arange(nreg+1):
     # plt.ion()
     plt.close('all')
     for ifig in np.arange(fig1,fig2+1):
+        print ifig, nr,nc
         # fig = plt.figure(ifig)
         # f, ax = plt.subplots(nr, nc,  sharex='col', sharey='row',figsize=(wdth*3.13,4.2*3.13))
         f, ax = plt.subplots(nr, nc,  sharex='col', figsize=(wdth*3.13,4.2*3.13))
 
         if ifig ==0:
+            print ifig
             title = 'lag correlation: STR location vs number of fronts, %s'%reg
             fout = "corrlag.frN_STRloc"
         if ifig ==1:
+            print ifig
             title = 'lag correlation: STR intensity vs number of fronts, %s'%reg
             fout = "corrlag.frN_STRint"
         plt.suptitle(title,fontsize=14)
+        print title
 
 
         for ic in np.arange(nc):
@@ -614,6 +663,7 @@ for ireg in np.arange(nreg+1):
             for ir in np.arange(nr):
             # for ir in [2,3,4,5]:
                 it = ir+ic*6
+                print tperiod[it+1]," start"
 
                 if tscale == 'mon':
                     a = ax[ir, ic]
@@ -665,6 +715,7 @@ for ireg in np.arange(nreg+1):
                     if it == nt-1 :
                         a.set_xlabel('lag')
                 a.set_title(' %s, %s'%(tperiod[it+1],reg))
+                print tperiod[it+1]," done"
 
                 #  trend & correlation
                 # if ifig != 11:
