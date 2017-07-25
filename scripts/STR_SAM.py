@@ -6,7 +6,6 @@ from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
 import numpy as np
 from scipy import stats
-from scipy import signal
 from scipy.optimize import curve_fit
 import scipy
 
@@ -144,6 +143,7 @@ tscale = "ssn"
 # SAMscale = "SH"
 SAMscale = "reg"
 
+
 # ssn   / use "YYY" for whole year
 ssn=["","YYY","DJF","MAM","JJA","SON"]
 month_abbr = ["   ","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
@@ -159,9 +159,9 @@ if tscale == "mon":    #for monthly analysis
 nf1 = 0# 5518 ;0
 nf2 = 20000# 5518 ;20000
 
-nfig = 12  # possible combinations of vars
-fig1 = 12
-fig2 = 12
+nfig = 3  # possible combinations of vars
+fig1 = 0
+fig2 = 0
 
 
 hs = "SH"
@@ -170,36 +170,98 @@ nreg = 5
 
 cc = np.zeros((nreg+1,nfig+1,2,nt),dtype=np.float) # correlation
 
+# ************************************************
+# read ONI
+# ************************************************
+ONI = np.zeros((nyrs,12)); ONI.fill(np.nan)
+
+fONI = "../output/SAM_STR_ENSO/oni.txt" # ONI is a 3-months average ENSO3.4
+with open(fONI, "r") as text_file:
+    header1 = text_file.readline()
+    for line in text_file:
+        # print (line)
+        columns = line.split()
+        # print (columns)
+        yr = int(columns[0])
+
+        if np.any(yrs==yr) :
+            ONI[yr-year[0],:] = columns[1:13]
+        if(yr==year[1]):
+            break
+
+    text_file.close
+
+ONIssn = np.zeros((2,nt,nyrs),dtype=np.float);ONIssn.fill(np.nan)
+ONIssn_tr = np.zeros((2,nt),dtype=np.float);ONIssn.fill(np.nan)
+
+if tscale=='ssn':
+  for it,issn in enumerate(ssn[1:]) :
+      print issn
+      cy = yr-year[0]
+      if issn == 'YYY':
+          mons = np.array([2,5,8,11])
+      if issn == 'MAM':
+          mons = np.array([4])
+      if issn == 'JJA':
+          mons = np.array([7])
+      if issn == 'SON':
+          mons = np.array([10])
+      if issn == 'DJF':
+          mons = np.array([1])
+
+      mons = mons-1
+
+      if issn != "YYY":
+          for yr in yrs:
+            #   print yr, SAM[yr-year[0],mons]
+              if issn != "DJF":
+                  ONIssn[0,it,yr-year[0]] = ONI[yr-year[0],mons]
+              if yr != year[0] and issn == "DJF":
+                #   ONIssn[0,it,yr-year[0]] = ONI[yr-year[0]-1,-1]
+                  ONIssn[0,it,yr-year[0]] = ONI[yr-year[0]-1,mons]
+      else:
+          ONIssn[0,it,:] = np.mean(ONI[:,mons],axis=1)
+
+#       print ONIssn[0,it,:]
+#       print ONI[:,mons]
+#
+# print(ONIssn[0,:,:])
+# quit()
+# ************************************************
+# set region
+# ************************************************
 
 for ireg in np.arange(nreg+1):
+# for ireg in np.arange(1):
+
     if ireg == 0:
         lon = [ -90,361]
-        lat = [ -40,-20]
+        lat = [ -90, 0]
         reg = "%d_%dS"%(np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 1:
         lon = [ 30,90]
-        lat = [ -40,-20]
+        lat = [ -90, 0]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 2:
         lon = [ 90,150]
-        lat = [ -40,-20]
+        lat = [ -90, 0]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 3:
         lon = [ 150,210]
-        lat = [ -40,-20]
+        lat = [ -90, 0]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 4:
         lon = [ 210,285]
-        lat = [ -40,-20]
+        lat = [ -90, 0]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 5:
-        lon = [ 300,20]
-        lat = [ -40,-20]
+        lon = [ 300,340]
+        lat = [ -90, 0]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
 
@@ -218,6 +280,8 @@ for ireg in np.arange(nreg+1):
     mslp65 = np.zeros((nyrs,12)); mslp65.fill(np.nan)
 
     SAM = np.zeros((nyrs,12)); SAM.fill(np.nan)
+    SAM40 = np.zeros((nyrs,12)); SAM40.fill(np.nan)
+    SAM65 = np.zeros((nyrs,12)); SAM65.fill(np.nan)
 
     for yr in yrs:
       slpyr = yr
@@ -253,14 +317,9 @@ for ireg in np.arange(nreg+1):
       print dt_nc[1].year
 
 
-      latslpSH  = latslp[np.logical_and(latslp<=-20,latslp>=-65)]
-      mslpSH    = mslp[:,np.logical_and(latslp<=-20,latslp>=-65),:]
-      if lon[0]<lon[1]:
-          mslpSHlon = mslpSH[:,:,np.logical_and(lonslp<=lon[1],lonslp>=lon[0])]
-      elif lon[0]>lon[1]:
-          mslpSHlon = mslpSH[:,:,lonslp>=lon[0]]
-          mslpSHlon = np.append(mslpSHlon,mslpSH[:,:,lonslp<=lon[1]],axis=2)
-
+      latslpSH  = latslp[np.logical_and(latslp<-20,latslp>-65)]
+      mslpSH    = mslp[:,np.logical_and(latslp<-20,latslp>-65),:]
+      mslpSHlon = mslpSH[:,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])]
       mslpSHlonDec = mslpSHlon[-1,:,:]
       if SAMscale == "SH":
           mslp40[yr-year[0],:]    = np.squeeze(np.mean( mslp[:,latslp==-40,:],axis=2))
@@ -268,12 +327,8 @@ for ireg in np.arange(nreg+1):
       elif SAMscale == "reg":
           tmp40 = np.squeeze(mslp[:,latslp==-40,:])
           tmp65 = np.squeeze(mslp[:,latslp==-65,:])
-          if lon[0]<lon[1]:
-              mslp40[yr-year[0],:]    = np.mean( tmp40[:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1)
-              mslp65[yr-year[0],:]    = np.mean( tmp65[:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1)
-          elif lon[0]>lon[1]:
-              mslp40[yr-year[0],:] = np.mean(np.append(tmp40[:,lonslp>=lon[0]],tmp40[:,lonslp<=lon[1]],axis=1))
-              mslp65[yr-year[0],:] = np.mean(np.append(tmp65[:,lonslp>=lon[0]],tmp65[:,lonslp<=lon[1]],axis=1))
+          mslp40[yr-year[0],:]    = np.mean( tmp40[:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1)
+          mslp65[yr-year[0],:]    = np.mean( tmp65[:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1)
 
 
       # zonal average
@@ -298,13 +353,8 @@ for ireg in np.arange(nreg+1):
               STR1slp[0,im,yr-year[0]] = np.amax(slp_z[im,:])
               STR1lat[0,im,yr-year[0]] = latslpSH[np.argmax(slp_z[im,:])]
 
-              if lon[0]<lon[1]:
-                  STR2slp[0,im,yr-year[0]] = np.mean(np.amax(mslpSH[im,:,np.logical_and(lonslp<=lon[1],lonslp>=lon[0])],axis=1))
-                  STR2lat[0,im,yr-year[0]] = np.mean(latslpSH[np.argmax(mslpSH[im,:,np.logical_and(lonslp<=lon[1],lonslp>=lon[0])],axis=1)])
-              elif lon[0]>lon[1]:
-                  STR2slp[0,im,yr-year[0]] = np.mean(np.amax(np.append(mslpSH[im,:,lonslp>=lon[0]],mslpSH[im,:,lonslp<=lon[1]],axis=2),axis=1))
-                  STR2lat[0,im,yr-year[0]] = np.mean(latslpSH[np.argmax(np.append(mslpSH[im,:,lonslp>=lon[0]],mslpSH[im,:,lonslp<=lon[1]],axis=2),axis=1)])
-
+              STR2slp[0,im,yr-year[0]] = np.mean(np.amax(mslpSH[im,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1))
+              STR2lat[0,im,yr-year[0]] = np.mean(latslpSH[np.argmax(mslpSH[im,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1)])
 
       if tscale == 'ssn' :
           for it,issn in enumerate(ssn[1:]) :
@@ -391,10 +441,13 @@ for ireg in np.arange(nreg+1):
 
             SAM[yr-year[0],im] = (mslp40[yr-year[0],im]-np.mean(mslp40[:nyr1,im]))/ \
             np.std(mslp40[:nyr1,im])-(mslp65[yr-year[0],im]-np.mean(mslp65[:nyr1,im]))/np.std(mslp65[:nyr1,im])
+            SAM40[yr-year[0],im] = (mslp40[yr-year[0],im]-np.mean(mslp40[:nyr1,im]))/ \
+            np.std(mslp40[:nyr1,im])
+            SAM65[yr-year[0],im] = (mslp65[yr-year[0],im]-np.mean(mslp65[:nyr1,im]))/np.std(mslp65[:nyr1,im])
             print im, yr, SAM[yr-year[0],im]
 
 
-    fSAM = "../output/SAM.%s%d_%d.txt"%(reg,year[0],year[1]-1)
+    fSAM = "../output/SAM.%s.%d_%d.txt"%(reg,year[0],year[1]-1)
     with open(fSAM, "w") as text_file:
         text_file.write("    {:>7}\n".format('     '.join(month_abbr)))
         # print  ' '.join(month_abbr[1:])
@@ -407,7 +460,11 @@ for ireg in np.arange(nreg+1):
 
 
     SAMssn = np.zeros_like(STR1slp);SAMssn.fill(np.nan)
-    SAMssn_tr = np.zeros([ 2,nt],dtype=np.float)
+    SAMssn_tr = np.zeros_like(STR1slp_tr);SAMssn.fill(np.nan)
+    SAM40ssn = np.zeros_like(STR1slp);SAM40ssn.fill(np.nan)
+    SAM40ssn_tr = np.zeros_like(STR1slp_tr);SAM40ssn.fill(np.nan)
+    SAM65ssn = np.zeros_like(STR1slp);SAM65ssn.fill(np.nan)
+    SAM65ssn_tr = np.zeros_like(STR1slp_tr);SAM65ssn.fill(np.nan)
 
     if tscale=='ssn':
       for it,issn in enumerate(ssn[1:]) :
@@ -421,196 +478,197 @@ for ireg in np.arange(nreg+1):
               mons = np.array([6,7,8])
           if issn == 'SON':
               mons = np.array([9,10,11])
-        #   if issn == 'DJF':
-        #       mons = np.array([1,2])
+          if issn == 'DJF':
+              mons = np.array([1,2])
 
           mons = mons-1
 
-        #   SAMssn[0,it,:] = np.mean(SAM[:,mons],axis=1)
-          for yr in yrs:
-
-              if issn != "YYY":
+          SAMssn[0,it,:] = np.mean(SAM[:,mons],axis=1)
+          if issn != "YYY":
+              for yr in yrs:
                 #   print yr, SAM[yr-year[0],mons]
-                  if  issn != "DJF":
+                  if yr != year[0] and issn != "DJF":
                       SAMssn[0,it,yr-year[0]] = np.mean(SAM[yr-year[0],mons])
+                      SAM40ssn[0,it,yr-year[0]] = np.mean(SAM40[yr-year[0],mons])
+                      SAM65ssn[0,it,yr-year[0]] = np.mean(SAM65[yr-year[0],mons])
                   if yr != year[0] and issn == "DJF":
                       SAMssn[0,it,yr-year[0]] = np.mean([SAM[yr-year[0]-1,-1],SAM[yr-year[0],0],SAM[yr-year[0],1]])
-
-              elif issn == "YYY":
-                  SAMssn[0,it,:] = np.mean(SAM[:,mons],axis=1)
-
-          print issn, SAMssn[0,it,:]
-
+                      SAM40ssn[0,it,yr-year[0]] = np.mean([SAM40[yr-year[0]-1,-1],SAM40[yr-year[0],0],SAM40[yr-year[0],1]])
+                      SAM65ssn[0,it,yr-year[0]] = np.mean([SAM65[yr-year[0]-1,-1],SAM65[yr-year[0],0],SAM65[yr-year[0],1]])
+            #   print SAMssn[0,it,:]
+    #
+    # print SAMssn[0,:,:]
+    # print SAMssn.shape
 
 
     # quit()
 
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #  Fronts
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    for yr in yrs:
-      fin = "../frontgrd/frline.%d.nc"%yr
-      print "fronts from %s"%fin
-      ncf = Dataset(fin, 'r')
-
-      print ncf.variables.keys()
-      flon = ncf.variables['flon'][:]
-      flat = ncf.variables['flat'][:]
-      time = ncf.variables['time'][:]
-      dv = ncf.variables['dv'][:]
-      nf = ncf.variables['nfr'][:]
-      npts = ncf.variables['npts'][:]
-
-      fdt = [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
-           for t in time]
-
-
-      if np.any(nf>maxnf) :
-        print np.amax(nf)
-        print "ERROR: nf > maxnf"
-        quit()
-
-      if np.any(npts > maxnp) :
-        print np.amax(npts)
-        print "ERROR:  np > maxnp"
-        quit()
-
-      # ************************************************
-      # masking
-      # ************************************************
-      # create mask
-
-      for ind,t in enumerate(fdt):
-        if t.year == yr and t.month==1 and t.day == 1 and t.hour == 0:
-           tfr1 = ind
-        if t.year == yr and t.month==12 and t.day == 31 and t.hour == 18:
-           tfr2 = ind
-           break
-
-      if yr == year[0]:
-          if calendar.isleap(yr):
-              frmask = np.zeros((nyrs,tfr2-tfr1+1,maxnf),dtype=np.int)
-              frdv  = np.zeros((nyrs,tfr2-tfr1+1,maxnf),dtype=np.float)
-              frmask_it = np.zeros((nt,nyrs,tfr2-tfr1+1,maxnf),dtype=np.int)
-              frdv_it  = np.zeros((nt,nyrs,tfr2-tfr1+1,maxnf),dtype=np.float)
-          else:
-              frmask = np.zeros((nyrs,tfr2-tfr1+5,maxnf),dtype=np.int)
-              frdv   = np.zeros((nyrs,tfr2-tfr1+5,maxnf),dtype=np.float32)
-              frmask_it = np.zeros((nt,nyrs,tfr2-tfr1+5,maxnf),dtype=np.int)
-              frdv_it   = np.zeros((nt,nyrs,tfr2-tfr1+5,maxnf),dtype=np.float32)
-          frNPlat = np.zeros_like(frdv)
-          frNPlat_it = np.zeros_like(frdv_it)
-
-
-      for ct in np.arange(tfr1,tfr2+1):
-          if fdt[ct].year>=year[0] and fdt[ct].year<=year[1]:
-                for ifr in range(nf[ct]):
-                  if ifr+1>=nf1 and ifr+1<=nf2:
-                      for ip in range(npts[ct,ifr]):
-                          if flat[ct,ifr,ip]>=lat[0] and flat[ct,ifr,ip]<=lat[1]:
-                              if (lon[0] < lon[1] and flon[ct,ifr,ip]>=lon[0] and flon[ct,ifr,ip]<=lon[1]) or (lon[0] > lon[1] and (flon[ct,ifr,ip]>=lon[0] or flon[ct,ifr,ip]<=lon[1])):
-                                  frmask[yr-year[0],ct-tfr1,ifr] = fdt[ct].month
-                                  frdv[yr-year[0],ct-tfr1,ifr] = np.sum(dv[ct,ifr,:npts[ct,ifr]])
-                                  frNPlat[yr-year[0],ct-tfr1,ifr] = np.amax(flat[ct,ifr,:npts[ct,ifr]])
-                                  break
-
-
-
-    # ************************************************
-    # front stats
-    # ************************************************
-    if tscale == 'mon':
-        for it in np.arange(nt):
-            frmask_it[it,:,:,:] = np.where(frmask==it+1,1,0)
-            frdv_it[it,:,:,:]   = np.where(frmask==it+1,frdv,0)
-            frNPlat_it[it,:,:,:]= np.where(frmask==it+1,frNPlat,0)
-
-    if tscale == 'ssn':
-        for it,issn in enumerate(ssn[1:]):
-          print issn
-          if issn == 'YYY':
-              mons = np.arange(1,13)
-          if issn == 'MAM':
-              mons = [3,4,5]
-          if issn == 'JJA':
-              mons = [6,7,8]
-          if issn == 'SON':
-              mons = [9,10,11]
-          if issn == 'DJF':
-              mons = [12,1,2]
-
-          if issn is not 'DJF' and issn is not 'YYY':
-              frmask_it[it,:,:,:] = np.where(frmask==mons[0],1,frmask_it[it,:,:,:] )
-              frmask_it[it,:,:,:] = np.where(frmask==mons[1],1,frmask_it[it,:,:,:] )
-              frmask_it[it,:,:,:] = np.where(frmask==mons[2],1,frmask_it[it,:,:,:] )
-              frdv_it[it,:,:,:]   = np.where(frmask_it[it,:,:,:]==1,frdv,0)
-              frNPlat_it[it,:,:,:]= np.where(frmask_it[it,:,:,:]==1,frNPlat,0)
-
-          elif issn is 'DJF' :
-              for yr in np.arange(1,nyrs):
-                  frmask_it[it,yr,:,:] = np.where(frmask[yr-1,:,:]==mons[0],1,frmask_it[it,yr,:,:] )
-                  frdv_it[it,yr,:,:]   = np.where(frmask[yr-1,:,:]==mons[0],frdv[yr-1,:,:],frdv_it[it,yr,:,:] )
-                  frNPlat_it[it,yr,:,:]= np.where(frmask[yr-1,:,:]==mons[0],frNPlat[yr-1,:,:],frNPlat_it[it,yr,:,:] )
-
-                  frmask_it[it,yr,:,:] = np.where(frmask[yr,:,:]==mons[1],1,frmask_it[it,yr,:,:] )
-                  frmask_it[it,yr,:,:] = np.where(frmask[yr,:,:]==mons[2],1,frmask_it[it,yr,:,:] )
-                  frdv_it[it,yr,:,:]   = np.where(frmask[yr,:,:]==mons[1],frdv[yr,:,:],frdv_it[it,yr,:,:] )
-                  frNPlat_it[it,yr,:,:]= np.where(frmask[yr,:,:]==mons[1],frNPlat[yr,:,:],frNPlat_it[it,yr,:,:] )
-                  frdv_it[it,yr,:,:]   = np.where(frmask[yr,:,:]==mons[2],frdv[yr,:,:],frdv_it[it,yr,:,:] )
-                  frNPlat_it[it,yr,:,:]= np.where(frmask[yr,:,:]==mons[2],frNPlat[yr,:,:],frNPlat_it[it,yr,:,:] )
-
-          elif issn is  'YYY' :
-                  frmask_it[it,:,:,:] = np.where(frmask!=0,1,frmask_it[it,:,:,:])
-                  frdv_it[it,:,:,:]   = np.where(frmask!=0,frdv,0 )
-                  frNPlat_it[it,:,:,:]= np.where(frmask!=0,frNPlat,0 )
-
-
-
-    dvcrit           = np.zeros(nt,dtype = np.float)
-    nfr_my           = np.zeros([ 3,nt,nyrs],dtype=np.float)
-    nfr_my3tr        = np.zeros_like(nfr_my)
-    frNPlat_my       = np.zeros_like(nfr_my)
-    frNPlat_my3tr    = np.zeros_like(nfr_my)
-
-    nfr_my_tr        = np.zeros([ 2,nt],dtype=np.float)
-    nfr_my3tr_tr     = np.zeros_like(nfr_my_tr)
-    frNPlat_my_tr    = np.zeros_like(nfr_my_tr)
-    frNPlat_my3tr_tr = np.zeros_like(nfr_my_tr)
-
-    for it in range(nt):
-
-        frdvtmp = frdv_it[it,:,:,:][np.where(frmask_it[it,:,:,:] == 1)]
-        print frdvtmp.shape
-
-        dvcrit[it] =  np.percentile(frdvtmp,67)
-        print  tperiod[it+1], " 67th %% threshold=",dvcrit[it]
-
-        # hist, bin_edges = np.histogram(frdvtmp,range=(0.1,25))
-        # print "pdf: ",hist
-        # print bin_edges
-
-
-        for yr in yrs:
-            for it in range(nt):
-                if yr==year[0] and tperiod[it+1]=="DJF":
-                    nfr_my[0,it,yr-year[0]]        = None
-                    frNPlat_my[0,it,yr-year[0]]    = None
-                    nfr_my3tr[0,it,yr-year[0]]     = None
-                    frNPlat_my3tr[0,it,yr-year[0]] = None
-                else:
-                    nfr_my[0,it,yr-year[0]]=np.sum(frmask_it[it,yr-year[0],:,:]==1)
-
-                    tmp0 = frNPlat_it[it,yr-year[0],:,:][np.where(frmask_it[it,yr-year[0],:,:] == 1)]
-                    frNPlat_my[0,it,yr-year[0]]=np.mean(tmp0)
-
-                    tmp  = frdv_it[it,yr-year[0],:,:][np.where(frmask_it[it,yr-year[0],:,:] == 1)]
-                    nfr_my3tr[0,it,yr-year[0]]=np.count_nonzero(np.where(tmp>=dvcrit[it], 1,0))
-                    frNPlat_my3tr[0,it,yr-year[0]]=np.mean(tmp0[np.where(tmp>=dvcrit[it])])
-                    # nfr_my3tr[it,yr-year[0]]=np.sum(frmask[yr-year[0],:,:]==im and frdv[yr-year[0],:,:]>=dvcrit[im-1])
-                    # print yr, im, month_abbr[im], frNPlat_my[0,im-1,yr-year[0]],frNPlat_my3tr[0,im-1,yr-year[0]]
-                    # print np.count_nonzero(np.where(frmask[yr-year[0],:,:]== im, 1,0))
-
+    # # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # #  Fronts
+    # # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    #
+    # for yr in yrs:
+    #   fin = "../frontgrd/frline.%d.nc"%yr
+    #   print "fronts from %s"%fin
+    #   ncf = Dataset(fin, 'r')
+    #
+    #   print ncf.variables.keys()
+    #   flon = ncf.variables['flon'][:]
+    #   flat = ncf.variables['flat'][:]
+    #   time = ncf.variables['time'][:]
+    #   dv = ncf.variables['dv'][:]
+    #   nf = ncf.variables['nfr'][:]
+    #   npts = ncf.variables['npts'][:]
+    #
+    #   fdt = [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
+    #        for t in time]
+    #
+    #
+    #   if np.any(nf>maxnf) :
+    #     print np.amax(nf)
+    #     print "ERROR: nf > maxnf"
+    #     quit()
+    #
+    #   if np.any(npts > maxnp) :
+    #     print np.amax(npts)
+    #     print "ERROR:  np > maxnp"
+    #     quit()
+    #
+    #   # ************************************************
+    #   # masking
+    #   # ************************************************
+    #   # create mask
+    #
+    #   for ind,t in enumerate(fdt):
+    #     if t.year == yr and t.month==1 and t.day == 1 and t.hour == 0:
+    #        tfr1 = ind
+    #     if t.year == yr and t.month==12 and t.day == 31 and t.hour == 18:
+    #        tfr2 = ind
+    #        break
+    #
+    #   if yr == year[0]:
+    #       if calendar.isleap(yr):
+    #           frmask = np.zeros((nyrs,tfr2-tfr1+1,maxnf),dtype=np.int)
+    #           frdv  = np.zeros((nyrs,tfr2-tfr1+1,maxnf),dtype=np.float)
+    #           frmask_it = np.zeros((nt,nyrs,tfr2-tfr1+1,maxnf),dtype=np.int)
+    #           frdv_it  = np.zeros((nt,nyrs,tfr2-tfr1+1,maxnf),dtype=np.float)
+    #       else:
+    #           frmask = np.zeros((nyrs,tfr2-tfr1+5,maxnf),dtype=np.int)
+    #           frdv   = np.zeros((nyrs,tfr2-tfr1+5,maxnf),dtype=np.float32)
+    #           frmask_it = np.zeros((nt,nyrs,tfr2-tfr1+5,maxnf),dtype=np.int)
+    #           frdv_it   = np.zeros((nt,nyrs,tfr2-tfr1+5,maxnf),dtype=np.float32)
+    #       frNPlat = np.zeros_like(frdv)
+    #       frNPlat_it = np.zeros_like(frdv_it)
+    #
+    #
+    #   for ct in np.arange(tfr1,tfr2+1):
+    #       if fdt[ct].year>=year[0] and fdt[ct].year<=year[1]:
+    #             for ifr in range(nf[ct]):
+    #               if ifr+1>=nf1 and ifr+1<=nf2:
+    #                   for ip in range(npts[ct,ifr]):
+    #                       if flat[ct,ifr,ip]>=lat[0] and flat[ct,ifr,ip]<=lat[1]:
+    #                           if flon[ct,ifr,ip]>=lon[0] and flon[ct,ifr,ip]<=lon[1]:
+    #                               frmask[yr-year[0],ct-tfr1,ifr] = fdt[ct].month
+    #                               frdv[yr-year[0],ct-tfr1,ifr] = np.sum(dv[ct,ifr,:npts[ct,ifr]])
+    #                               frNPlat[yr-year[0],ct-tfr1,ifr] = np.amax(flat[ct,ifr,:npts[ct,ifr]])
+    #                               break
+    #
+    #
+    #
+    # # ************************************************
+    # # front stats
+    # # ************************************************
+    # if tscale == 'mon':
+    #     for it in np.arange(nt):
+    #         frmask_it[it,:,:,:] = np.where(frmask==it+1,1,0)
+    #         frdv_it[it,:,:,:]   = np.where(frmask==it+1,frdv,0)
+    #         frNPlat_it[it,:,:,:]= np.where(frmask==it+1,frNPlat,0)
+    #
+    # if tscale == 'ssn':
+    #     for it,issn in enumerate(ssn[1:]):
+    #       print issn
+    #       if issn == 'YYY':
+    #           mons = np.arange(1,13)
+    #       if issn == 'MAM':
+    #           mons = [3,4,5]
+    #       if issn == 'JJA':
+    #           mons = [6,7,8]
+    #       if issn == 'SON':
+    #           mons = [9,10,11]
+    #       if issn == 'DJF':
+    #           mons = [12,1,2]
+    #
+    #       if issn is not 'DJF' and issn is not 'YYY':
+    #           frmask_it[it,:,:,:] = np.where(frmask==mons[0],1,frmask_it[it,:,:,:] )
+    #           frmask_it[it,:,:,:] = np.where(frmask==mons[1],1,frmask_it[it,:,:,:] )
+    #           frmask_it[it,:,:,:] = np.where(frmask==mons[2],1,frmask_it[it,:,:,:] )
+    #           frdv_it[it,:,:,:]   = np.where(frmask_it[it,:,:,:]==1,frdv,0)
+    #           frNPlat_it[it,:,:,:]= np.where(frmask_it[it,:,:,:]==1,frNPlat,0)
+    #
+    #       elif issn is 'DJF' :
+    #           for yr in np.arange(1,nyrs):
+    #               frmask_it[it,yr,:,:] = np.where(frmask[yr-1,:,:]==mons[0],1,frmask_it[it,yr,:,:] )
+    #               frdv_it[it,yr,:,:]   = np.where(frmask[yr-1,:,:]==mons[0],frdv[yr-1,:,:],frdv_it[it,yr,:,:] )
+    #               frNPlat_it[it,yr,:,:]= np.where(frmask[yr-1,:,:]==mons[0],frNPlat[yr-1,:,:],frNPlat_it[it,yr,:,:] )
+    #
+    #               frmask_it[it,yr,:,:] = np.where(frmask[yr,:,:]==mons[1],1,frmask_it[it,yr,:,:] )
+    #               frmask_it[it,yr,:,:] = np.where(frmask[yr,:,:]==mons[2],1,frmask_it[it,yr,:,:] )
+    #               frdv_it[it,yr,:,:]   = np.where(frmask[yr,:,:]==mons[1],frdv[yr,:,:],frdv_it[it,yr,:,:] )
+    #               frNPlat_it[it,yr,:,:]= np.where(frmask[yr,:,:]==mons[1],frNPlat[yr,:,:],frNPlat_it[it,yr,:,:] )
+    #               frdv_it[it,yr,:,:]   = np.where(frmask[yr,:,:]==mons[2],frdv[yr,:,:],frdv_it[it,yr,:,:] )
+    #               frNPlat_it[it,yr,:,:]= np.where(frmask[yr,:,:]==mons[2],frNPlat[yr,:,:],frNPlat_it[it,yr,:,:] )
+    #
+    #       elif issn is  'YYY' :
+    #               frmask_it[it,:,:,:] = np.where(frmask!=0,1,frmask_it[it,:,:,:])
+    #               frdv_it[it,:,:,:]   = np.where(frmask!=0,frdv,0 )
+    #               frNPlat_it[it,:,:,:]= np.where(frmask!=0,frNPlat,0 )
+    #
+    #
+    #
+    # dvcrit           = np.zeros(nt,dtype = np.float)
+    # nfr_my           = np.zeros([ 3,nt,nyrs],dtype=np.float)
+    # nfr_my3tr        = np.zeros_like(nfr_my)
+    # frNPlat_my       = np.zeros_like(nfr_my)
+    # frNPlat_my3tr    = np.zeros_like(nfr_my)
+    #
+    # nfr_my_tr        = np.zeros([ 2,nt],dtype=np.float)
+    # nfr_my3tr_tr     = np.zeros_like(nfr_my_tr)
+    # frNPlat_my_tr    = np.zeros_like(nfr_my_tr)
+    # frNPlat_my3tr_tr = np.zeros_like(nfr_my_tr)
+    #
+    # for it in range(nt):
+    #
+    #     frdvtmp = frdv_it[it,:,:,:][np.where(frmask_it[it,:,:,:] == 1)]
+    #     print frdvtmp.shape
+    #
+    #     dvcrit[it] =  np.percentile(frdvtmp,67)
+    #     print  tperiod[it+1], " 67th %% threshold=",dvcrit[it]
+    #
+    #     # hist, bin_edges = np.histogram(frdvtmp,range=(0.1,25))
+    #     # print "pdf: ",hist
+    #     # print bin_edges
+    #
+    #
+    #     for yr in yrs:
+    #         for it in range(nt):
+    #             if yr==year[0] and tperiod[it+1]=="DJF":
+    #                 nfr_my[0,it,yr-year[0]]        = None
+    #                 frNPlat_my[0,it,yr-year[0]]    = None
+    #                 nfr_my3tr[0,it,yr-year[0]]     = None
+    #                 frNPlat_my3tr[0,it,yr-year[0]] = None
+    #             else:
+    #                 nfr_my[0,it,yr-year[0]]=np.sum(frmask_it[it,yr-year[0],:,:]==1)
+    #
+    #                 tmp0 = frNPlat_it[it,yr-year[0],:,:][np.where(frmask_it[it,yr-year[0],:,:] == 1)]
+    #                 frNPlat_my[0,it,yr-year[0]]=np.mean(tmp0)
+    #
+    #                 tmp  = frdv_it[it,yr-year[0],:,:][np.where(frmask_it[it,yr-year[0],:,:] == 1)]
+    #                 nfr_my3tr[0,it,yr-year[0]]=np.count_nonzero(np.where(tmp>=dvcrit[it], 1,0))
+    #                 frNPlat_my3tr[0,it,yr-year[0]]=np.mean(tmp0[np.where(tmp>=dvcrit[it])])
+    #                 # nfr_my3tr[it,yr-year[0]]=np.sum(frmask[yr-year[0],:,:]==im and frdv[yr-year[0],:,:]>=dvcrit[im-1])
+    #                 # print yr, im, month_abbr[im], frNPlat_my[0,im-1,yr-year[0]],frNPlat_my3tr[0,im-1,yr-year[0]]
+    #                 # print np.count_nonzero(np.where(frmask[yr-year[0],:,:]== im, 1,0))
+    #
     # # ************************************************
     # #  Record Numbers for multiple regression
     # # ************************************************
@@ -646,22 +704,22 @@ for ireg in np.arange(nreg+1):
 
     # fronts
 
-    title = "Trends in N of fronts"
-    filetrend = "../output/trend.Nfr.%d_%d.xls"%(year[0],year[1]-1)
-    trend(ireg,reg,nt,yrs,nfr_my,nfr_my_tr,title,tperiod,filetrend)
-
-    title = "Trends in N of STRONG fronts"
-    filetrend = "../output/trend.Nfrstr.%d_%d.xls"%(year[0],year[1]-1)
-    trend(ireg,reg,nt,yrs,nfr_my3tr,nfr_my3tr_tr,title,tperiod,filetrend)
-
-    title = "Trends in frontal NP lat"
-    filetrend = "../output/trend.frNPlat.%d_%d.xls"%(year[0],year[1]-1)
-    trend(ireg,reg,nt,yrs,frNPlat_my,frNPlat_my_tr,title,tperiod,filetrend)
-
-    title = "Trends in STRONG fronts NP lat"
-    filetrend = "../output/trend.frNPlat_str.%d_%d.xls"%(year[0],year[1]-1)
-    trend(ireg,reg,nt,yrs,frNPlat_my3tr,frNPlat_my3tr_tr,title,tperiod,filetrend)
-
+    # title = "Trends in N of fronts"
+    # filetrend = "../output/trend.Nfr.%d_%d.xls"%(year[0],year[1]-1)
+    # trend(ireg,reg,nt,yrs,nfr_my,nfr_my_tr,title,tperiod,filetrend)
+    #
+    # title = "Trends in N of STRONG fronts"
+    # filetrend = "../output/trend.Nfrstr.%d_%d.xls"%(year[0],year[1]-1)
+    # trend(ireg,reg,nt,yrs,nfr_my3tr,nfr_my3tr_tr,title,tperiod,filetrend)
+    #
+    # title = "Trends in frontal NP lat"
+    # filetrend = "../output/trend.frNPlat.%d_%d.xls"%(year[0],year[1]-1)
+    # trend(ireg,reg,nt,yrs,frNPlat_my,frNPlat_my_tr,title,tperiod,filetrend)
+    #
+    # title = "Trends in STRONG fronts NP lat"
+    # filetrend = "../output/trend.frNPlat_str.%d_%d.xls"%(year[0],year[1]-1)
+    # trend(ireg,reg,nt,yrs,frNPlat_my3tr,frNPlat_my3tr_tr,title,tperiod,filetrend)
+    #
 
     # STR
 
@@ -673,19 +731,21 @@ for ireg in np.arange(nreg+1):
     filetrend = "../output/trend.STR1int.%d_%d.xls"%(year[0],year[1]-1)
     trend(ireg,reg,nt,yrs,STR1slp,STR1slp_tr,title,tperiod,filetrend)
 
-    # title = "Trends in STR2 location"
-    # filetrend = "../output/trend.STR2loc.%d_%d.xls"%(year[0],year[1]-1)
-    # trend(ireg,reg,nt,yrs,STR2lat,STR2lat_tr,title,tperiod,filetrend)
-    #
-    # title = "Trends in STR2 intensity"
-    # filetrend = "../output/trend.STR2int.%d_%d.xls"%(year[0],year[1]-1)
-    # trend(ireg,reg,nt,yrs,STR2slp,STR2slp_tr,title,tperiod,filetrend)
+    title = "Trends in STR2 location"
+    filetrend = "../output/trend.STR2loc.%d_%d.xls"%(year[0],year[1]-1)
+    trend(ireg,reg,nt,yrs,STR2lat,STR2lat_tr,title,tperiod,filetrend)
 
+    title = "Trends in STR2 intensity"
+    filetrend = "../output/trend.STR2int.%d_%d.xls"%(year[0],year[1]-1)
+    trend(ireg,reg,nt,yrs,STR2slp,STR2slp_tr,title,tperiod,filetrend)
 
     # SAM
-    title = "Trends in SAM %s" % SAMscale
-    filetrend = "../output/trend.SAM%s.%d_%d.xls"%(SAMscale,year[0],year[1]-1)
+
+    title = "Trends in SAM"
+    filetrend = "../output/trend.SAM.%d_%d.xls"%(year[0],year[1]-1)
     trend(ireg,reg,nt,yrs,SAMssn,SAMssn_tr,title,tperiod,filetrend)
+
+    print SAMssn
 
     #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # Plotting
@@ -704,9 +764,6 @@ for ireg in np.arange(nreg+1):
         nr = nt
         wdth = 3.
 
-    if fig1 ==12:
-        nc = 1
-
 
     # plt.ion()
     plt.close('all')
@@ -716,77 +773,19 @@ for ireg in np.arange(nreg+1):
         f, ax = plt.subplots(nr, nc,  sharex='col', figsize=(wdth*3.13,4.2*3.13))
 
         if ifig ==0:
-            title = 'STR (loc,int) vs number of fronts, %s'%reg
-            fout = "frN_STR"
-        if ifig ==1:
-            title = 'STR intensity vs number of strong fronts, %s'%reg
-            fout = "frNstr_STRint"
-        if ifig ==2:
-            title = 'STR location vs number of fronts, %s'%reg
-            fout = "frN_STRloc"
-        if ifig ==3:
-            title = 'STR location vs number of strong fronts, %s'%reg
-            fout = "frNstr_STRloc"
-        if ifig ==4:
-            title = 'STR intensity vs north lat of fronts, %s'%reg
-            fout = "frNorthLat_STRint"
-        if ifig ==5:
-            title = 'STR intensity vs north lat of strong fronts, %s'%reg
-            fout = "frNorthLatstr_STRint"
-        if ifig ==6:
-            title = 'STR location vs north lat of fronts, %s'%reg
-            fout = "frNorthLat_STRloc"
-        if ifig ==7:
-            title = 'STR location vs north lat of strong fronts, %s'%reg
-            fout = "frNorthLatstr_STRloc"
-        if ifig ==8:
-            title = 'STR1 intensity vs location, %s'%reg
-            fout = "STR1int_STR1loc"
-        if ifig ==9:
-            title = 'STR1 intensity vs STR2 intensity, %s'%reg
-            fout = "STR1int_STR2int"
-        if ifig ==10:
-            title = 'STR1 location vs STR2 location, %s'%reg
-            fout = "STR1loc_STR2loc"
-        if ifig ==11:
-            title = 'N of fronts vs (STR loc, STR lat), %s'%reg
-            fout = "frN_STRloc_STRlat"
-        if ifig ==12:
-            title = 'frN vs SAM_%s, %s'%(SAMscale,reg)
-            fout = "frN_SAM%s"%SAMscale
-        plt.suptitle(title,fontsize=14)
 
-        if any ([0,2,11] == ifig ):
-            var1 = nfr_my/1000
-            yax1 = [900, 1800]
-            yax1label = 'number of fronts'
-            var1legend = 'N of fronts'
+            title = 'SAM%s vs (STR loc, STR int), %s'%(SAMscale,reg)
+            fout = "SAM%s_STRloc_STRlat"%(SAMscale)
 
-        if ifig ==1 or ifig == 3:
-            var1 = nfr_my3tr
-            yax1 = [300, 700]
-            yax1label = 'number of fronts'
-            var1legend = 'N of strong fronts (int > 67th perc)'
+            plt.suptitle(title,fontsize=14)
 
-        if any ([4,6] == ifig ):
-            var1 = frNPlat_my
-            yax1 = [-40, -25]
-            yax1label = 'latitude'
-            var1legend = 'front lat north'
+        # if any ([0,2,11] == ifig ):
+            print 'set var1 == SAMssn'
+            var1 = SAMssn
+            yax1 = [-5, 5]
+            yax1label = 'SAM'
+            var1legend = 'SAM'
 
-        if any ([5,7] == ifig ):
-            var1 = frNPlat_my3tr
-            yax1 = [-40, -25]
-            yax1label = 'latitude'
-            var1legend = 'strong front lat north'
-
-        if any ([0,1,4,5] == ifig ):
-            var2 = STR1slp
-            yax2 = [1010, 1025]
-            yax2label = 'MSL Pressure (Pa)'
-            var2legend = 'STR intensity'
-
-        if any ([0,1,4,5] == ifig ):
             var2 = STR1lat
             yax2 = [-40, -25]
             yax2label = 'latitude'
@@ -797,73 +796,80 @@ for ireg in np.arange(nreg+1):
             yax3label = 'MSL Pressure (Pa)'
             var3legend = 'STR intensity'
 
-        if any ([2,3,6,7,8] == ifig ):
-            var2 = STR1lat
-            yax2 = [-40, -25]
-            yax2label = 'latitude'
-            var2legend = 'STR location'
 
-        if any ([8,9] == ifig ):
-            var1 = STR1slp
-            yax1 = [1010, 1025]
-            yax1label = 'MSL Pressure (Pa)'
-            var1legend = 'STR1 intensity'
+        if ifig ==1:
+            title = 'SAM%s vs (mslp40, mslp65), %s'%(SAMscale,reg)
+            fout = "SAM%s_mslp"%(SAMscale)
 
-        if ifig == 9:
-            var2 = STR2slp
-            yax2 = [1010, 1025]
-            yax2label = 'MSL Pressure (Pa)'
-            var2legend = 'STR2 intensity'
+            plt.suptitle(title,fontsize=14)
 
-        if ifig == 10:
-            var1 = STR1lat
-            yax1 = [-40, -25]
-            yax1label = 'latitude'
-            var1legend = 'STR1 location'
+        # if any ([0,2,11] == ifig ):
+            print 'set var1 == SAMssn'
+            var1 = SAMssn
+            yax1 = [-5, 5]
+            yax1label = 'SAM'
+            var1legend = 'SAM'
 
-            var2 = STR2lat
-            yax2 = [-40, -25]
-            yax2label = 'latitude'
-            var2legend = 'STR2 location'
+            var2 = SAM40ssn
+            yax2 = [-5, 5]
+            yax2label = 'mslp40'
+            var2legend = 'mslp40'
 
-        if ifig ==11 :
-            var2 = nfr_my[2,:,:]
-            yax2 = [900, 1800]
-            yax2label = 'number of fronts'
-            var2legend = 'Linear fit'
+            var3 = -SAM65ssn
+            yax3 = [-5, 5]
+            yax3label = '-mslp65'
+            var3legend = '(-1)mslp65'
 
-        if ifig == 12:
-            var1 = nfr_my
-            yax1 = [900, 1800]
-            yax1label = 'number of fronts'
-            var1legend = 'N of fronts'
+        if ifig ==2:
+            title = 'mslp40 vs mslp65, %s'%reg
+            fout = "mslp40_mslp65"
 
-            var2 = SAMssn
-            yax2 = [-3, 3]
-            yax2label = ''
-            var2legend = 'SAM %s' % SAMscale
-            print "var2==SAMssn"
-            print SAMssn[0,:,:]
+            plt.suptitle(title,fontsize=14)
 
-        for ic in np.arange(nc):
-        # for ic in [0,1]:
+        # if any ([0,2,11] == ifig ):
+
+            var1 = SAM40ssn
+            yax1 = [-5, 5]
+            yax1label = 'mslp40'
+            var1legend = 'mslp40'
+
+            var2 = -SAM65ssn
+            yax2 = [-5, 5]
+            yax2label = '-mslp65'
+            var2legend = '(-1)mslp65'
+
+        if ifig ==3:
+            title = 'SAM%s vs ENSO3.4, %s'%(SAMscale,reg)
+            fout = "SAM%s_ONI"%(SAMscale)
+
+            plt.suptitle(title,fontsize=14)
+
+        # if any ([0,2,11] == ifig ):
+
+            var1 = SAMssn
+            yax1 = [-5, 5]
+            yax1label = 'SAMreg'
+            var1legend = 'SAMreg'
+
+            var2 = ONIssn
+            yax2 = [-5, 5]
+            yax2label = 'ENSO3.4'
+            var2legend = 'ENSO3.4'
+
+
+        # for ic in np.arange(nc):
+        for ic in np.arange(2):
             for ir in np.arange(nr):
             # for ir in [2,3,4,5]:
                 it = ir+ic*6
 
-                print ir, ic, it
-
                 # if tscale == 'mon':
-                # a = ax[ir, ic]
+                a = ax[ir, ic]
                 # if tscale == 'ssn':
-                a = ax[it]
+                #     a = ax[it]
                 a2 = a.twinx()
 
                 a.plot(yrs,var1[0,ir,:],color='b',lw=1,label=var1legend)
-                # if ifig ==11:
-                #     a2.plot(yrs,var2[it,:],color='g',lw=1,label=var2legend)
-                # else:
-                #     a2.plot(yrs,var2[0,it,:],color='g',lw=1,label=var2legend)
                 if ic == 0:
                     var = var2
                     yax = yax2
@@ -876,8 +882,7 @@ for ireg in np.arange(nreg+1):
                     varlegend = var3legend
 
                 a2.plot(yrs,var[0,ir,:],color='g',lw=1,label=varlegend)
-                if ic ==1:
-                    a2.set_ylim(a2.get_ylim()[::-1])
+
 
                 # ax[ir, ic].set_title('STR intensity, %s, SH'%tperiod[it+1])
 
@@ -886,7 +891,7 @@ for ireg in np.arange(nreg+1):
                 # ax2.set_ylim(0, 35)
                 print tperiod[ir+1],np.amin(var1[0,ir,:]),np.amax(var1[0,ir,:])
                 # a.set_ylim(0.9*np.amin(var1[0,it,:]),1.1*np.amax(var1[0,it,:]))
-                # a2.set_ylim(0.9*np.amin(var2[0,it,:]),1.1*np.amax(var2[0,it,:]))
+                # a2.set_ylim(0.9*np.amin(var1[0,it,:]),1.1*np.amax(var1[0,it,:]))
 
                 # a.xaxis.set_ticks(yrs)
                 # xa = a.get_xaxis()
@@ -896,8 +901,7 @@ for ireg in np.arange(nreg+1):
                 a.xaxis.set_major_locator(majorLocator)
                 a.xaxis.set_major_formatter(majorFormatter)
                 # a.yaxis.set_major_formatter(majorFormatter)
-                a.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-                a2.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+                # a2.yaxis.set_major_formatter(majorFormatter)
                 # a.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
                 # a2.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
@@ -915,33 +919,28 @@ for ireg in np.arange(nreg+1):
                         a.set_xlabel('Year')
                 if tscale == "ssn":
                     if ir == 3 :
-                        if ic == 0:
-                            a.set_ylabel(yax1label,color='b')
+                        a.set_ylabel(yax1label,color='b')
+                        if nc == 0:
                             a2.set_ylabel(yax2label,color='g')
-                        if ic == 1:
+                        if nc == 1:
                             a2.set_ylabel(yax3abel,color='g')
 
                     if ir == nt-1 :
                         a.set_xlabel('Year')
 
                 #  trend & correlation
-                if ifig != 11:
-                    a.plot(yrs,var1[1,ir,:],color='b',lw=2)
-                    a2.plot(yrs,var[1,ir,:],color='g',lw=2)
 
-                    mask  = ~np.isnan(var1[0,ir,:]) & ~np.isnan(var[0,ir,:])
-                    cctmp = np.corrcoef(var1[0,ir,mask],var[0,ir,mask])
-                else:
-                    mask  = ~np.isnan(var1[0,ir,:]) & ~np.isnan(var[ir,:])
-                    cctmp = np.corrcoef(var1[0,ir,mask],var[ir,mask])
+                a.plot(yrs,var1[1,ir,:],color='b',lw=2)
+                a2.plot(yrs,var[1,ir,:],color='g',lw=2)
+
+                mask  = ~np.isnan(var1[0,ir,:]) & ~np.isnan(var[0,ir,:])
+                cctmp = np.corrcoef(var1[0,ir,mask],var[0,ir,mask])
+
                 cc[ireg,ifig,0,ir] = cctmp[1,0]
-                if ifig != 11:
-                    cctmp = np.corrcoef(var1[0,ir,mask]-var1[1,ir,mask],var[0,ir,mask]-var[1,ir,mask])
-                    cc[ireg,ifig,1,ir] = cctmp[1,0]
-                    # a.set_title(' %s, %s, r = %.2f, r_dt = %.2f'%(tperiod[ir+1],reg,cc[ireg,ifig,0,ir],cc[ireg,ifig,1,ir]))
-                    a.set_title(' %s, r = %.2f'%(tperiod[ir+1],cc[ireg,ifig,0,ir]))
-                else:
-                    a.set_title(' %s, %s, r = %.2f'%(tperiod[ir+1],reg,cc[ireg,ifig,0,ir]))
+
+                cctmp = np.corrcoef(var1[0,ir,mask]-var1[1,ir,mask],var[0,ir,mask]-var[1,ir,mask])
+                cc[ireg,ifig,1,ir] = cctmp[1,0]
+                a.set_title(' %s, %s, r = %.2f, r_dt = %.2f'%(tperiod[ir+1],reg,cc[ireg,ifig,0,ir],cc[ireg,ifig,1,ir]))
 
                 if ir == nt-1 :
                     # ask matplotlib for the plotted objects and their labels
@@ -952,43 +951,20 @@ for ireg in np.arange(nreg+1):
                     # ax[ir, ic].legend(loc='lower right')
 
 
-        # plt.setp([a.set_xlabel('Year') for a in ax[5, :]])
-
                 # ************************************************
                 #  correlations to Excel
                 # ************************************************
-                # if ic == 0:
-                #     fxls = "../output/%sloc.%d_%d.xls"%(fout,year[0],year[1]-1)
-                # else:
-                #     fxls = "../output/%sint.%d_%d.xls"%(fout,year[0],year[1]-1)
-                # if ireg == 0 and os.path.exists(fxls):
-                #         os.remove(fxls)
-                # output(ireg,reg,fxls, "corr", title, tperiod, cc[ireg,ifig,:,:])
-
-
-                # ************************************************
-                #  correlations with SAM
-                # ************************************************
-                # if ic == 0:
-                #     fxls = "../output/SAM_STRloc.%d_%d.xls"%(fout,year[0],year[1]-1)
-                # else:
-                #     fxls = "../output/SAM_STRint.%d_%d.xls"%(fout,year[0],year[1]-1)
-                # if ireg == 0 and os.path.exists(fxls):
-                #         os.remove(fxls)
-                # output(ireg,reg,fxls, "corr", title, tperiod, cc[ireg,ifig,:,:])
-
-
+                if ifig == 0:
+                    if ic == 0:
+                        fxls = "../output/SAM%s_STRlat.%d_%d.xls"%(SAMscale,year[0],year[1]-1)
+                    elif  ic ==1:
+                        fxls = "../output/SAM%s_STRslp.%d_%d.xls"%(SAMscale,year[0],year[1]-1)
+                    if ireg == 0 and os.path.exists(fxls):
+                            os.remove(fxls)
+                    output(ireg,reg,fxls, "corr", title, tperiod, cc[ireg,ifig,:,:])
 
 
         f.subplots_adjust(hspace=0.3,wspace = 0.3)
         plt.draw()
-        f.savefig("../output/%s.%s.%s%d_%d.png"%(fout,reg,tscale,year[0],year[1]-1))
+        f.savefig("../output/%s.%s.mon%d_%d.png"%(fout,reg,year[0],year[1]-1))
         plt.close(f)
-
-        # ************************************************
-        #  correlations frN with SAM
-        # ************************************************
-        fxls = "../output/%s.%d_%d.xls"%(fout,year[0],year[1]-1)
-        if ireg == 0 and os.path.exists(fxls):
-                os.remove(fxls)
-        output(ireg,reg,fxls, "corr", title, tperiod, cc[ireg,ifig,:,:])

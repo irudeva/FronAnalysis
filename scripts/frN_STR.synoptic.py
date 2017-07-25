@@ -137,7 +137,7 @@ mm = [1,12]  #[ 9,9]
 dd = [1,31]
 hr = [0,18]
 
-lag = 15 #lag in days
+lag = 5 #lag in days
 
 #choose time scale
 tscale = "ssn"
@@ -165,40 +165,40 @@ fig2 = 1
 
 hs = "SH"
 # reg
-nreg = 0
+nreg = 5
 
 cc = np.zeros((nreg+1,nfig+1,2,nt),dtype=np.float) # correlation
 
 
-for ireg in np.arange(nreg+1):
+for ireg in np.arange(3,nreg+1):
     if ireg == 0:
         lon = [ -90,361]
-        lat = [ -40,-20]
+        lat = [ -40, -20]
         reg = "%d_%dS"%(np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 1:
         lon = [ 30,90]
-        lat = [ -40,-20]
+        lat = [ -40, -20]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 2:
         lon = [ 90,150]
-        lat = [ -40,-20]
+        lat = [ -40, -20]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 3:
         lon = [ 150,210]
-        lat = [ -40,-20]
+        lat = [ -40, -20]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 4:
         lon = [ 210,285]
-        lat = [ -40,-20]
+        lat = [ -40, -20]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 5:
         lon = [ 300,340]
-        lat = [ -40,-20]
+        lat = [ -40, -20]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
 
@@ -244,6 +244,22 @@ for ireg in np.arange(nreg+1):
                 time = slpnc.variables['time'][:]
                 mslp = slpnc.variables['msl'][:]/100.
 
+                if np.any(lonslp<0):
+                    print "!!!!WARNING!!!! Check lons"
+                    print lonslp
+                    print "Converting from [-180,180) to [0,360)"
+
+                    lonslp_old = lonslp
+                    lonslp = lonslp_old[lonslp_old>=0]
+                    lonslp = np.append(lonslp,lonslp_old[lonslp_old<0]+360.)
+
+
+                    mslp_old = mslp
+                    mslp = mslp_old[:,:,lonslp_old>=0]
+                    mslp = np.append(mslp,mslp_old[:,:,lonslp_old<0],axis=2)
+
+
+
                 dt_slp = [datetime.datetime(1900, 1, 1, 0) + datetime.timedelta(hours=int(t))\
                    for t in time]
                 if slpyr == yr :
@@ -254,7 +270,10 @@ for ireg in np.arange(nreg+1):
 
                 latslpSH  = latslp[np.logical_and(latslp<-20,latslp>-65)]
                 mslpSH    = mslp[:,np.logical_and(latslp<-20,latslp>-65),:]
+                print mslpSH.shape
+                print lonslp
                 mslpSHlon = mslpSH[:,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])]
+                print mslpSHlon
                 # mslpSHlonDec = mslpSHlon[-1,:,:]
 
                 # zonal average
@@ -496,6 +515,7 @@ for ireg in np.arange(nreg+1):
 
       for ct in np.arange(tfr1,tfr2+1):
           frN[0,yr-year[0],tfr0+(ct-tfr1)] = np.sum(np.where(frmask[yr-year[0],:,:]==time[ct],1,0))
+          print yr, ct, frN[0,yr-year[0],tfr0+(ct-tfr1)]
           frT[0,yr-year[0],tfr0+(ct-tfr1)] = time[ct]
 
           frN_clim[fdt[ct].month-1,fdt[ct].day-1,fdt[ct].hour/6-1,yr-year[0]]=frN[0,yr-year[0],tfr0+(ct-tfr1)]
@@ -634,7 +654,8 @@ for ireg in np.arange(nreg+1):
     if tscale == "ssn":
         nc = 1
         nr = nt-1
-        wdth = 3.
+        # wdth = 3.
+        wdth = 2.
 
 
 
@@ -681,7 +702,7 @@ for ireg in np.arange(nreg+1):
                 # ax[ir, ic].set_title('STR intensity, %s, SH'%tperiod[it+1])
 
                 a.set_ylim(-.7, .7)
-                a.set_xlim(-360, 360)
+                a.set_xlim(-lag*24, lag*24)
                 # a2.axis((year[0]-1, year[1], yax2[0], yax2[1]))
                 # ax2.set_ylim(0, 35)
                 # print tperiod[it+1],np.amin(var1[0,it,:]),np.amax(var1[0,it,:])
