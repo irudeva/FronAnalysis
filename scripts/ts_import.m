@@ -1,7 +1,8 @@
 %% Import data from text file.
 
-sec = { '0_90S','30_90E.0_90S','90_150E.0_90S','150_210E.0_90S','210_285E.0_90S','300_20E.0_90S'};
-fsec = { '20_40S','30_90E.20_40S','90_150E.20_40S','150_210E.20_40S','210_285E.20_40S','300_20E.20_40S'};
+sec = { '0_90S','300_20E.0_90S','30_90E.0_90S','90_150E.0_90S','150_210E.0_90S','210_285E.0_90S'};
+fsec = { '20_40S','300_20E.20_40S','30_90E.20_40S','90_150E.20_40S','150_210E.20_40S','210_285E.20_40S'};
+charsec = {'SH','Atl','Ind','Au','WPac','EPac'}
 nsec = length(sec);
 yr1= 1979;
 yr2 = 2015;
@@ -15,7 +16,7 @@ frN = zeros(nsec,5,nyrs);
 for isec = 1:6
 
 %% Initialize variables
-filename = strcat('/Users/irudeva/work/Projects/Front/FrontAnalysis/output/ts/frN.',fsec(isec),'.1979_2015.txt');
+filename = strcat('/Users/Irina/work/Projects/Front/FrontAnalysis/output/ts/frN.',fsec(isec),'.1979_2015.txt');
 fn = char(filename);
 startRow = 2;
 
@@ -95,7 +96,7 @@ STRint = zeros(nsec,5,nyrs);
 for isec = 1:6
 
 %% Initialize variables
-filename = strcat('/Users/irudeva/work/Projects/Front/FrontAnalysis/output/ts/STRint.',sec(isec),'.1979_2015.txt');
+filename = strcat('/Users/Irina/work/Projects/Front/FrontAnalysis/output/ts/STRint.',sec(isec),'.1979_2015.txt');
 fn = char(filename);
 startRow = 2;
 
@@ -175,7 +176,7 @@ STRloc = zeros(nsec,5,nyrs);
 for isec = 1:6
 
 %% Initialize variables
-filename = strcat('/Users/irudeva/work/Projects/Front/FrontAnalysis/output/ts/STRloc.',sec(isec),'.1979_2015.txt');
+filename = strcat('/Users/Irina/work/Projects/Front/FrontAnalysis/output/ts/STRloc.',sec(isec),'.1979_2015.txt');
 fn = char(filename);
 startRow = 2;
 
@@ -255,7 +256,7 @@ mslp40 = zeros(nsec,5,nyrs);
 for isec = 1:6
 
 %% Initialize variables
-filename = strcat('/Users/irudeva/work/Projects/Front/FrontAnalysis/output/ts/mslp40.',sec(isec),'.1979_2015.txt');
+filename = strcat('/Users/Irina/work/Projects/Front/FrontAnalysis/output/ts/mslp40.',sec(isec),'.1979_2015.txt');
 fn = char(filename);
 startRow = 2;
 
@@ -335,7 +336,7 @@ mslp65 = zeros(nsec,5,nyrs);
 for isec = 1:6
 
 %% Initialize variables
-filename = strcat('/Users/irudeva/work/Projects/Front/FrontAnalysis/output/ts/mslp65.',sec(isec),'.1979_2015.txt');
+filename = strcat('/Users/Irina/work/Projects/Front/FrontAnalysis/output/ts/mslp65.',sec(isec),'.1979_2015.txt');
 fn = char(filename);
 startRow = 2;
 
@@ -415,7 +416,7 @@ SAMssn = zeros(nsec,5,nyrs);
 for isec = 1:6
 
 %% Initialize variables
-filename = strcat('/Users/irudeva/work/Projects/Front/FrontAnalysis/output/ts/SAMssn.',sec(isec),'.1979_2015.txt');
+filename = strcat('/Users/Irina/work/Projects/Front/FrontAnalysis/output/ts/SAMssn.',sec(isec),'.1979_2015.txt');
 fn = char(filename);
 startRow = 2;
 
