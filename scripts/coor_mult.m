@@ -4,6 +4,7 @@
 %sec = { '0_90S','300_340E.0_90S','30_90E.0_90S','90_150E.0_90S','150_210E.0_90S','210_285E.0_90S'};
 %charsec = {'SH','Atl','Ind','Au','WPac','EPac'}
 ssn = { 'YYY','DJF','MAM','JJA','SON'};
+nssn = length(ssn);
 
 yr1= 1979;
 yr2 = 2015;
@@ -126,3 +127,5 @@ for issn = 1:nssn
 
 
 end
+
+clear b bint c c1 c2 c3 c4 cc* i* lgd linfit nsec nssn nyrs r* stats X* x* y*

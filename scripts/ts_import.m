@@ -489,3 +489,5 @@ end
 %% Clear temporary variables
 clearvars fn filename startRow formatSpec fileID dataArray ans raw col numericData rawData row regexstr result numbers invalidThousandsSeparator thousandsRegExp me R;
 end
+
+clear yr1 yr2 yrs nyrs isec issn
