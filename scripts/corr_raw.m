@@ -102,8 +102,13 @@ for isec = 1:nsec
     xright = 1.2:5.2;
     c1 = plot(xleft,cc_STRloc_frN(isec,:),'ko');
     title(charsec(isec));
-    ylim([0 1]);
     xlim([0.5 5.5]);
+%     if isec == 1 
+%         ylim([-1 1]);
+%         line(get(gca, 'xlim'),[0 0], 'Color','black','LineWidth',0.0005);
+%     else
+        ylim([0 1]);
+ %   end
     %set(gca,'XTick',[1.5:4.5])
     set(gca,'xgrid','off')
     
@@ -126,14 +131,15 @@ for isec = 1:nsec
     c5 = plot(xcent,-cc_frN_SAM(isec,:),'b*');
     
     if isec ==1
-    
-        l1 = plot(xleft-0.1,cc_STRloc_SH,'k+');
-        l2 = plot(xleft-0.1,cc_STRloc_LH,'kp');
-        l3 = plot(xleft-0.1,cc_STRloc_PE,'k^');
+        lcolor =  [0.8500    0.3250    0.0980];
+        lcolor = [0.9290    0.6940    0.1250];
+        l1 = plot(xleft-0.1,cc_STRloc_SH,'+','Color',lcolor);
+        l2 = plot(xleft-0.1,cc_STRloc_LH,'p','Color',lcolor);
+        l3 = plot(xleft-0.1,cc_STRloc_PE,'^','Color',lcolor);
 
-        i1 = plot(xright+0.1,-cc_STRint_SH,'m+');
-        i2 = plot(xright+0.1,-cc_STRint_LH,'mp');
-        i3 = plot(xright+0.1,-cc_STRint_PE,'m^');
+        i1 = plot(xright+0.1,-cc_STRint_SH,'r+');
+        i2 = plot(xright+0.1,-cc_STRint_LH,'rp');
+        i3 = plot(xright+0.1,-cc_STRint_PE,'r^');
 
         f1 = plot(xcent,cc_frN_SH,'g+');
         f2 = plot(xcent,cc_frN_LH,'gp');
@@ -186,4 +192,4 @@ for isec = 1:nsec
     end
 end
 
-clear c1 c2 c3 c4 c5 cc i* lgd p1 p2 x* y*
+clear c1 c2 c3 c4 c5 cc i* lgd p1 p2 x* y* l* f1 f2 f3 a*

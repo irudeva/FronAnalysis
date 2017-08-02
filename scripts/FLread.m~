@@ -77,13 +77,13 @@ for issn = 1:nssn
         iSTRloc = (STRloc(isec,issn,:)-mean(STRloc(isec,issn,ismember(yrs,yrclim))))/std(STRloc(isec,issn,ismember(yrs,yrclim)));
         y1 = [ (squeeze(-SAMssn(isec,issn,:)))';(squeeze(ifrN))';(squeeze(iSTRloc))'];
         % for regular ts
-        %y2 = [ squeeze(STRloc(isec,issn,:)),squeeze(SHssn(:,issn)),squeeze(LHssn(:,issn)),squeeze(PEssn(:,issn))];
+        y2 = [ squeeze(STRloc(isec,issn,:)),squeeze(SHssn(:,issn)),squeeze(LHssn(:,issn)),squeeze(PEssn(:,issn))];
         % for normalized ts
-        iSH = (SHssn(:,issn)-mean(SHssn(ismember(yrs,yrclim),issn)))/std(SHssn(ismember(yrs,yrclim),issn));
-        iLH = (LHssn(:,issn)-mean(LHssn(ismember(yrs,yrclim),issn)))/std(LHssn(ismember(yrs,yrclim),issn));
-        iPE = (PEssn(:,issn)-mean(PEssn(ismember(yrs,yrclim),issn)))/std(PEssn(ismember(yrs,yrclim),issn));
-        iSTRint = (STRint(isec,issn,:)-mean(STRint(isec,issn,ismember(yrs,yrclim))))/std(STRint(isec,issn,ismember(yrs,yrclim)));
-        y2 = [ squeeze(iSTRloc),squeeze(iSH),squeeze(iLH),squeeze(iPE)];
+%         iSH = (SHssn(:,issn)-mean(SHssn(ismember(yrs,yrclim),issn)))/std(SHssn(ismember(yrs,yrclim),issn));
+%         iLH = (LHssn(:,issn)-mean(LHssn(ismember(yrs,yrclim),issn)))/std(LHssn(ismember(yrs,yrclim),issn));
+%         iPE = (PEssn(:,issn)-mean(PEssn(ismember(yrs,yrclim),issn)))/std(PEssn(ismember(yrs,yrclim),issn));
+%         iSTRint = (STRint(isec,issn,:)-mean(STRint(isec,issn,ismember(yrs,yrclim))))/std(STRint(isec,issn,ismember(yrs,yrclim)));
+%         y2 = [ squeeze(iSTRloc),squeeze(iSH),squeeze(iLH),squeeze(iPE)];
    else
         clear ifrN iSTRloc yr
         yr = squeeze(yrs(1,2:nyrs));
@@ -94,17 +94,17 @@ for issn = 1:nssn
         iSTRloc = (STR_DJF-mean(STR_DJF(yrDJF)))/std(STR_DJF(yrDJF));
         y1 = [ (squeeze(-SAMssn(isec,issn,2:nyrs)))';(squeeze(ifrN))';(squeeze(iSTRloc))'];
         % for regular ts
-        %y2 = [squeeze(STRloc(isec,issn,2:nyrs)),squeeze(SHssn(2:nyrs,issn)),squeeze(LHssn(2:nyrs,issn)),squeeze(PEssn(2:nyrs,issn))];
+        y2 = [squeeze(squeeze(STRloc(isec,issn,2:nyrs)),squeeze(SHssn(2:nyrs,issn)),squeeze(LHssn(2:nyrs,issn)),squeeze(PEssn(2:nyrs,issn))];
         % for normalized ts
-        SH_DJF =  SHssn(2:nyrs,issn);
-        LH_DJF =  LHssn(2:nyrs,issn);
-        PE_DJF =  PEssn(2:nyrs,issn);
-        STR_DJF = STRint(isec,issn,2:nyrs);
-        iSH = (SH_DJF-mean(SH_DJF(yrDJF)))/std(SH_DJF(yrDJF));
-        iLH = (LH_DJF-mean(LH_DJF(yrDJF)))/std(LH_DJF(yrDJF));
-        iPE = (PE_DJF-mean(PE_DJF(yrDJF)))/std(PE_DJF(yrDJF));
-        iSTRint = (STR_DJF-mean(STR_DJF(yrDJF)))/std(STR_DJF(yrDJF));
-        y2 = [ squeeze(iSTRloc),squeeze(iSH),squeeze(iLH),squeeze(iPE)];
+%         SH_DJF =  SHssn(2:nyrs,issn);
+%         LH_DJF =  LHssn(2:nyrs,issn);
+%         PE_DJF =  PEssn(2:nyrs,issn);
+%         STR_DJF = STRint(isec,issn,2:nyrs);
+%         iSH = (SH_DJF-mean(SH_DJF(yrDJF)))/std(SH_DJF(yrDJF));
+%         iLH = (LH_DJF-mean(LH_DJF(yrDJF)))/std(LH_DJF(yrDJF));
+%         iPE = (PE_DJF-mean(PE_DJF(yrDJF)))/std(PE_DJF(yrDJF));
+%         iSTRint = (STR_DJF-mean(STR_DJF(yrDJF)))/std(STR_DJF(yrDJF));
+%         y2 = [ squeeze(iSTRloc),squeeze(iSH),squeeze(iLH),squeeze(iPE)];
     end
     
     x2 = [yr',yr',yr',yr'];
@@ -157,7 +157,7 @@ for issn = 1:nssn
     title(ssn(issn));
     
     if issn == nssn
-       lgd = legend({'-SAM','ifrN','iSTRint','STRloc','SH','LH','PE'});
+       lgd = legend({'-SAM','ifrN','iSTRloc','STRint','SH','LH','PE'});
        lgd.Location = 'bestoutside';
     end
 end
