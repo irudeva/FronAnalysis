@@ -16,7 +16,7 @@ frN = zeros(nsec,5,nyrs);
 for isec = 1:6
 
 %% Initialize variables
-filename = strcat('/Users/Irina/work/Projects/Front/FrontAnalysis/output/ts/frN.',fsec(isec),'.1979_2015.txt');
+filename = strcat('/Users/irudeva/work/Projects/Front/FrontAnalysis/output/ts/frN.',fsec(isec),'.1979_2015.txt');
 fn = char(filename);
 startRow = 2;
 
@@ -96,7 +96,7 @@ STRint = zeros(nsec,5,nyrs);
 for isec = 1:6
 
 %% Initialize variables
-filename = strcat('/Users/Irina/work/Projects/Front/FrontAnalysis/output/ts/STRint.',sec(isec),'.1979_2015.txt');
+filename = strcat('/Users/irudeva/work/Projects/Front/FrontAnalysis/output/ts/STRint.',sec(isec),'.1979_2015.txt');
 fn = char(filename);
 startRow = 2;
 
@@ -176,7 +176,7 @@ STRloc = zeros(nsec,5,nyrs);
 for isec = 1:6
 
 %% Initialize variables
-filename = strcat('/Users/Irina/work/Projects/Front/FrontAnalysis/output/ts/STRloc.',sec(isec),'.1979_2015.txt');
+filename = strcat('/Users/irudeva/work/Projects/Front/FrontAnalysis/output/ts/STRloc.',sec(isec),'.1979_2015.txt');
 fn = char(filename);
 startRow = 2;
 
@@ -256,7 +256,7 @@ mslp40 = zeros(nsec,5,nyrs);
 for isec = 1:6
 
 %% Initialize variables
-filename = strcat('/Users/Irina/work/Projects/Front/FrontAnalysis/output/ts/mslp40.',sec(isec),'.1979_2015.txt');
+filename = strcat('/Users/irudeva/work/Projects/Front/FrontAnalysis/output/ts/mslp40.',sec(isec),'.1979_2015.txt');
 fn = char(filename);
 startRow = 2;
 
@@ -336,7 +336,7 @@ mslp65 = zeros(nsec,5,nyrs);
 for isec = 1:6
 
 %% Initialize variables
-filename = strcat('/Users/Irina/work/Projects/Front/FrontAnalysis/output/ts/mslp65.',sec(isec),'.1979_2015.txt');
+filename = strcat('/Users/irudeva/work/Projects/Front/FrontAnalysis/output/ts/mslp65.',sec(isec),'.1979_2015.txt');
 fn = char(filename);
 startRow = 2;
 
@@ -416,7 +416,7 @@ SAMssn = zeros(nsec,5,nyrs);
 for isec = 1:6
 
 %% Initialize variables
-filename = strcat('/Users/Irina/work/Projects/Front/FrontAnalysis/output/ts/SAMssn.',sec(isec),'.1979_2015.txt');
+filename = strcat('/Users/irudeva/work/Projects/Front/FrontAnalysis/output/ts/SAMssn.',sec(isec),'.1979_2015.txt');
 fn = char(filename);
 startRow = 2;
 
