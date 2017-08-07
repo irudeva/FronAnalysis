@@ -170,35 +170,35 @@ nreg = 5
 cc = np.zeros((nreg+1,nfig+1,2,nt),dtype=np.float) # correlation
 
 
-for ireg in np.arange(3,nreg+1):
+for ireg in np.arange(nreg+1):
     if ireg == 0:
         lon = [ -90,361]
-        lat = [ -40, -20]
+        lat = [ -90, -10]
         reg = "%d_%dS"%(np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 1:
         lon = [ 30,90]
-        lat = [ -40, -20]
+        lat = [ -90, -10]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 2:
         lon = [ 90,150]
-        lat = [ -40, -20]
+        lat = [ -90, -10]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 3:
         lon = [ 150,210]
-        lat = [ -40, -20]
+        lat = [ -90, -10]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 4:
         lon = [ 210,285]
-        lat = [ -40, -20]
+        lat = [ -90, -10]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
     if ireg == 5:
-        lon = [ 300,340]
-        lat = [ -40, -20]
+        lon = [ 300,20]
+        lat = [ -90, -10]
         reg = "%d_%dE.%d_%dS"%(np.abs(lon[0]),np.abs(lon[1]),np.abs(lat[1]),np.abs(lat[0]))
 
 
@@ -265,16 +265,18 @@ for ireg in np.arange(3,nreg+1):
                 if slpyr == yr :
                     ndt = len(dt_slp)
 
+
                 STRlat_yr = np.zeros(len(dt_slp),dtype=np.float); STRlat_yr.fill(np.nan)
                 STRslp_yr = np.zeros_like(STRlat_yr); STRslp_yr.fill(np.nan)
 
-                latslpSH  = latslp[np.logical_and(latslp<-20,latslp>-65)]
-                mslpSH    = mslp[:,np.logical_and(latslp<-20,latslp>-65),:]
-                print mslpSH.shape
-                print lonslp
-                mslpSHlon = mslpSH[:,:,np.logical_and(lonslp<lon[1],lonslp>lon[0])]
-                print mslpSHlon
-                # mslpSHlonDec = mslpSHlon[-1,:,:]
+                latslpSH  = latslp[np.logical_and(latslp<=-20,latslp>=-65)]
+                mslpSH    = mslp[:,np.logical_and(latslp<=-20,latslp>=-65),:]
+                if lon[0]<lon[1]:
+                    mslpSHlon = mslpSH[:,:,np.logical_and(lonslp<=lon[1],lonslp>=lon[0])]
+                elif lon[0]>lon[1]:
+                    mslpSHlon = mslpSH[:,:,lonslp>=lon[0]]
+                    mslpSHlon = np.append(mslpSHlon,mslpSH[:,:,lonslp<=lon[1]],axis=2)
+
 
                 # zonal average
                 slp_z = np.mean(mslpSHlon,axis=2)
@@ -506,7 +508,7 @@ for ireg in np.arange(3,nreg+1):
                   if ifr+1>=nf1 and ifr+1<=nf2:
                       for ip in range(npts[ct,ifr]):
                           if flat[ct,ifr,ip]>=lat[0] and flat[ct,ifr,ip]<=lat[1]:
-                              if flon[ct,ifr,ip]>=lon[0] and flon[ct,ifr,ip]<=lon[1]:
+                              if (lon[0] < lon[1] and flon[ct,ifr,ip]>=lon[0] and flon[ct,ifr,ip]<=lon[1]) or (lon[0] > lon[1] and (flon[ct,ifr,ip]>=lon[0] or flon[ct,ifr,ip]<=lon[1])):
                                   frmask[yr-year[0],tfr0+(ct-tfr1),ifr] = time[ct]
                                   frdv[yr-year[0],tfr0+(ct-tfr1),ifr] = np.sum(dv[ct,ifr,:npts[ct,ifr]])
                                   frNPlat[yr-year[0],tfr0+(ct-tfr1),ifr] = np.amax(flat[ct,ifr,:npts[ct,ifr]])
@@ -636,8 +638,25 @@ for ireg in np.arange(3,nreg+1):
 
                 print ssn[iss+1],il," ",ilag,"h ",corr[iv,iss+1,il]
 
+                #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                # To ascii file
+                # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+                frN_STR = "../output/corrlag.frN_%s.%s.%d_%d.txt"%(STRsel,reg,year[0],year[1]-1)
+                with open(frN_STR, "w") as text_file:
+                          text_file.write("        {:>8}\n".format('     '.join(ssn)))
+                          # print  ' '.join(month_abbr[1:])
+
+                          lag1d = np.arange(-lag*6*4,lag*6*4+1,6)
+                          lag2d = np.zeros ((np.size(lag1d),1))
+                          lag2d[:,0] = lag1d
+                          np.savetxt(text_file, np.append(lag2d,np.transpose(corr[iv,1:,:]),axis=1), fmt='%8.3f')
+
+                          text_file.close()
+
 
     # quit()
+
     # #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # # Plotting
     # # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
