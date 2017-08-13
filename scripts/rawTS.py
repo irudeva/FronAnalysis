@@ -172,8 +172,8 @@ cc = np.zeros((nreg+1,nfig+1,2,nt),dtype=np.float) # correlation
 
 
 
-for ireg in np.arange(nreg+1):
-    lat = [-90, 0]
+for ireg in np.arange(5,nreg+1):
+    lat = [-40, -20]
     if ireg == 0:
         lon = [ -90,361]
         # lat = [ -40,-20]
@@ -276,8 +276,8 @@ for ireg in np.arange(nreg+1):
               mslp40[yr-year[0],:]    = np.mean( tmp40[:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1)
               mslp65[yr-year[0],:]    = np.mean( tmp65[:,np.logical_and(lonslp<lon[1],lonslp>lon[0])],axis=1)
           elif lon[0]>lon[1]:
-              mslp40[yr-year[0],:] = np.mean(np.append(tmp40[:,lonslp>=lon[0]],tmp40[:,lonslp<=lon[1]],axis=1))
-              mslp65[yr-year[0],:] = np.mean(np.append(tmp65[:,lonslp>=lon[0]],tmp65[:,lonslp<=lon[1]],axis=1))
+              mslp40[yr-year[0],:] = np.mean(np.append(tmp40[:,lonslp>=lon[0]],tmp40[:,lonslp<=lon[1]],axis=1),axis=1)
+              mslp65[yr-year[0],:] = np.mean(np.append(tmp65[:,lonslp>=lon[0]],tmp65[:,lonslp<=lon[1]],axis=1),axis=1)
 
 
       # zonal average

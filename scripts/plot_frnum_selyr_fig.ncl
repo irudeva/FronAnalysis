@@ -10,12 +10,101 @@ month_abbr = (/"","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep", \
 
 ;ssn   / use "YYY" for whole year
 ssnarr=(/"YYY","DJF","MAM","JJA","SON"/)
+nssn = dimsizes(ssnarr)
+
+year = (/1979,2015/)
+
 
 hs =(/"NH","SH"/)
 ;hs = "NH"
 do ihs =1,1
 
-STRarr = (/"STRloc", "STRint"/)
+;************************************************
+; Plotting - preparation
+;************************************************
+nreg =6
+plot = new((/2,nreg,nssn,3/),graphic)                          ; create a plot array
+
+; date_str1 = sprinti("%0.4i", year(0))+sprinti("%0.2i", mm(0))+ \
+;              sprinti("%0.2i", dd(0)) +"_"+sprinti("%0.2iZ", hr(0))
+; date_str2 = sprinti("%0.4i", year(1))+sprinti("%0.2i", mm(1))+ \
+;              sprinti("%0.2i", dd(1)) +"_"+sprinti("%0.2iZ", hr(1))
+
+wks_type = "png"
+wks_type@wkWidth = 2500
+wks_type@wkHeight = 2500
+
+; wks = gsn_open_wks("png","../output/FNPnum_"+STR+"."+reg+"."+ssn+year(0)+"_"+year(1) )                  ; send graphics to PNG file
+wks = gsn_open_wks(wks_type,"../output/STRyrs/frNall_STR/frN_STR10."+year(0)+"_"+year(1) )                  ; send graphics to PNG file
+print ("../output/STRyrs/frNall_STR/frN_STR10."+year(0)+"_"+year(1))
+
+res = True
+resd = True
+res@gsnDraw              = False             ; do not draw the plot
+res@gsnFrame             = False             ; do not advance the frame
+
+
+res@cnFillOn            = True        ; Turn on contour fill
+res@cnFillPalette       = "WhiteBlueGreenYellowRed"  ; Set color map
+
+res@gsnPolar   = hs(ihs)
+
+;res@mpLimitMode="LatLon"
+; if (hs(ihs).eq."NH")then
+;  res@mpMinLatF            = 15      ; range to zoom in on
+;  res@mpMaxLatF            =  90.
+;  else if (hs(ihs).eq."SH")then
+;    res@mpMinLatF            = -90      ; range to zoom in on
+;    res@mpMaxLatF            =  -15.
+;  else
+;    print("ERROR: Check hs")
+;  end if
+;  end if
+;res@mpMinLonF           = -60.
+;res@mpMaxLonF           = 120.
+
+res@cnLinesOn       = False                   ; turn off contour lines
+res@cnLineLabelsOn  = False                   ; tuen off line labels
+
+; res@tiMainString        = "Number of fronts per "+ssn
+;res@tiMainString        = date_str1 +" to "+ date_str2
+;res@tiMainString        = "From "+date_str1+" to "+date_str2 + "  " + ssn+"~C~~Z90~ reg lon: ("+rlon(0)+"E to "+rlon(1)+"E)  lat: ("+rlat(0)+"N to "+rlat(1)+"N)"
+
+
+
+; resd@cnLevelSelectionMode = "ManualLevels"
+; if (ssn.eq."YYY")then
+;   res@cnMinLevelValF   = 0.
+;   res@cnMaxLevelValF   = 25.
+;   res@cnLevelSpacingF  = 2.
+; else
+;   res@cnMinLevelValF   = 0.
+;   res@cnMaxLevelValF   = 8.
+;   res@cnLevelSpacingF  = .5
+; end if
+
+; for diff
+resd = res
+resd@cnFillPalette       = "BlueDarkRed18"  ; Set color map
+
+;res@cnLevelSelectionMode = "AutomaticLevels"
+resd@cnLevelSelectionMode = "ManualLevels"
+; if (ssn.eq."YYY")then
+  resd@cnMinLevelValF   = -5.
+  resd@cnMaxLevelValF   = 5.
+  resd@cnLevelSpacingF  = .5
+; else
+;   resd@cnMinLevelValF   = -2.
+;   resd@cnMaxLevelValF   = 2.
+;   resd@cnLevelSpacingF  = .2
+; end if
+
+resd@lbLabelBarOn        = False            ; turn off individual cb's
+
+;********************************************************************************
+
+
+STRarr = (/ "STRint","STRloc"/)
 sel = (/"max","min"/)
 do istr = 0,1
   STR = STRarr(istr)
@@ -52,18 +141,20 @@ do istr = 0,1
           rlon = (/ 210,285/)
           rlat = (/ -40,-20/)
           reg = abs(rlon(0))+"_"+abs(rlon(1))+"E."+abs(rlat(1))+"_"+abs(rlat(0))+"S"
-          regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
+          ; regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
+          regtitle = "WPac"
         end if
 
       if (ireg .eq. 5)then
-          rlon = (/ 300,340/)
+          rlon = (/ 300,20/)
           rlat = (/ -40,-20/)
           reg = abs(rlon(0))+"_"+abs(rlon(1))+"E."+abs(rlat(1))+"_"+abs(rlat(0))+"S"
-          regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
+          ; regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
+          regtitle = "Atl"
         end if
 
 
-  do issn = 0,4
+  do issn = 0,0
 
     ssn = ssnarr(issn)
 
@@ -109,88 +200,6 @@ do istr = 0,1
 
 
 
-
-  ;************************************************
-  ; Plotting - preparation
-  ;************************************************
-
-  ; date_str1 = sprinti("%0.4i", year(0))+sprinti("%0.2i", mm(0))+ \
-  ;              sprinti("%0.2i", dd(0)) +"_"+sprinti("%0.2iZ", hr(0))
-  ; date_str2 = sprinti("%0.4i", year(1))+sprinti("%0.2i", mm(1))+ \
-  ;              sprinti("%0.2i", dd(1)) +"_"+sprinti("%0.2iZ", hr(1))
-
-  regstr = reg+hs(ihs)
-
-  wks_type = "png"
-  wks_type@wkWidth = 2500
-  wks_type@wkHeight = 2500
-
-  ; wks = gsn_open_wks("png","../output/FNPnum_"+STR+"."+reg+"."+ssn+year(0)+"_"+year(1) )                  ; send graphics to PNG file
-  wks = gsn_open_wks(wks_type,"../output/STRyrs/frNall_STR/frN_"+STR+"10."+reg+"."+ssn+year(0)+"_"+year(1) )                  ; send graphics to PNG file
-
-  res = True
-  resd = True
-  res@gsnDraw              = False             ; do not draw the plot
-  res@gsnFrame             = False             ; do not advance the frame
-
-
-  res@cnFillOn            = True        ; Turn on contour fill
-  res@cnFillPalette       = "WhiteBlueGreenYellowRed"  ; Set color map
-
-  res@gsnPolar   = hs(ihs)
-
-  ;res@mpLimitMode="LatLon"
-  ; if (hs(ihs).eq."NH")then
-  ;  res@mpMinLatF            = 15      ; range to zoom in on
-  ;  res@mpMaxLatF            =  90.
-  ;  else if (hs(ihs).eq."SH")then
-  ;    res@mpMinLatF            = -90      ; range to zoom in on
-  ;    res@mpMaxLatF            =  -15.
-  ;  else
-  ;    print("ERROR: Check hs")
-  ;  end if
-  ;  end if
-  ;res@mpMinLonF           = -60.
-  ;res@mpMaxLonF           = 120.
-
-  res@cnLinesOn       = False                   ; turn off contour lines
-  res@cnLineLabelsOn  = False                   ; tuen off line labels
-
-  ; res@tiMainString        = "Number of fronts per "+ssn
-  ;res@tiMainString        = date_str1 +" to "+ date_str2
-  ;res@tiMainString        = "From "+date_str1+" to "+date_str2 + "  " + ssn+"~C~~Z90~ reg lon: ("+rlon(0)+"E to "+rlon(1)+"E)  lat: ("+rlat(0)+"N to "+rlat(1)+"N)"
-
-
-
-  resd@cnLevelSelectionMode = "ManualLevels"
-  if (ssn.eq."YYY")then
-    res@cnMinLevelValF   = 0.
-    res@cnMaxLevelValF   = 25.
-    res@cnLevelSpacingF  = 2.
-  else
-    res@cnMinLevelValF   = 0.
-    res@cnMaxLevelValF   = 8.
-    res@cnLevelSpacingF  = .5
-  end if
-
-  ; for diff
-  resd = res
-  resd@cnFillPalette       = "BlueDarkRed18"  ; Set color map
-
-  ;res@cnLevelSelectionMode = "AutomaticLevels"
-  resd@cnLevelSelectionMode = "ManualLevels"
-  if (ssn.eq."YYY")then
-    resd@cnMinLevelValF   = -5.
-    resd@cnMaxLevelValF   = 5.
-    resd@cnLevelSpacingF  = .5
-  else
-    resd@cnMinLevelValF   = -2.
-    resd@cnMaxLevelValF   = 2.
-    resd@cnLevelSpacingF  = .2
-  end if
-
-
-  plot = new(3,graphic)                          ; create a plot array
 
 
 
@@ -374,10 +383,11 @@ do istr = 0,1
       ; regfrgrd(:,ind(lon.gt.rlon(0).and.lon.le.rlon(1))) = avfrgrd(nsel,:,ind(lon.gt.rlon(0).and.lon.le.rlon(1)))
 
       wrf_smooth_2d(regfrgrd,3)
+      res@gsnStringFontHeightF = 0.011
       res@tiMainString        = "fronts in "+STR+"  "+sel(nsel)+"  "+ssn+ "  "+ reg
 
       res@gsnLeftString =str_concat(sprinti("%5.0i", toint(yrs)))
-      plot(nsel) = gsn_csm_contour_map_polar(wks,regfrgrd,res)
+      plot(istr,ireg,issn,nsel) = gsn_csm_contour_map_polar(wks,regfrgrd,res)
 
     end do
 
@@ -392,26 +402,40 @@ do istr = 0,1
   copy_VarMeta(regfrgrd,diff)
 
 
-  resd@tiMainString        = STR+" "+sel(0) +"-"+ sel(1)+", "+ssn+ "  "+ reg
+  ; resd@tiMainString        = STR+" "+sel(0) +"-"+ sel(1)+", "+ssn+ "  "+ reg
+  resd@tiMainString        = "fr N: "+STR +" "+sel(0) +"-"+ sel(1)+", "+"  "+ regtitle
+  resd@tiMainOffsetYF      = .01
+  resd@gsnLeftString        = ""
 
-  plot(2) = gsn_csm_contour_map_polar(wks,diff,resd)
+  plot(istr,ireg,issn,2) = gsn_csm_contour_map_polar(wks,diff,resd)
 
-
-  ;************************************************
-  ; create panel
-  ;************************************************
-    resP                    = True                 ; modify the panel plot
-    ; resP@gsnPanelMainString = "A common title"     ; new resource added in NCL V6.4.0
-    resP@txString           = "fr N: "+STR +" "+sel(0) +"-"+ sel(1)+", "+ ssn + "  "+ regtitle
-    gsn_panel(wks,plot,(/2,2/),resP)               ; now draw as one plot
-
-  delete(plot)
-
-  end do ; years
-  delete(frgrd)
-  delete(yrs)
- end do ; ssn
+end do ; years
+delete(frgrd)
+delete(yrs)
+end do ; ssn
 end do ; reg
 end do ; STR
+;************************************************
+; create panel
+;************************************************
+resP                    = True                 ; modify the panel plot
+; resP@gsnPanelMainString = "A common title"     ; new resource added in NCL V6.4.0
+;resP@txString           = "fr N: "+STR +" "+sel(0) +"-"+ sel(1)+", "+ ssn + "  "+ regtitle
+resP@gsnPanelTop     = 0.95
+
+
+resP@gsnPanelLabelBar   = True                 ; add common colorbar
+resP@lbLabelStride      = 2
+resP@lbLabelFontHeightF         = 0.009
+
+resP@gsnPanelXWhiteSpacePercent = 2
+resP@gsnPanelYWhiteSpacePercent = 3
+
+
+selplot = (/plot(0,0,0,2),plot(1,0,0,2),plot(0,4,0,2)  , plot(1,4,0,2),plot(0,5,0,2)  , plot(1,5,0,2)/)
+gsn_panel(wks,selplot,(/3,2/),resP)               ; now draw as one plot
+
+delete(plot)
+
 end do ; ihs
 end
