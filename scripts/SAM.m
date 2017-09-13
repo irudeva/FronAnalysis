@@ -51,3 +51,4 @@ for issn = 1:nssn
     
 end
 clear charsecSAM
+
