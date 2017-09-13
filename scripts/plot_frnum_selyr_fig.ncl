@@ -54,8 +54,8 @@ res@gsnPolar   = hs(ihs)
 ;  res@mpMinLatF            = 15      ; range to zoom in on
 ;  res@mpMaxLatF            =  90.
 ;  else if (hs(ihs).eq."SH")then
-;    res@mpMinLatF            = -90      ; range to zoom in on
-;    res@mpMaxLatF            =  -15.
+   res@mpMinLatF            = -90      ; range to zoom in on
+   res@mpMaxLatF            =  -15.
 ;  else
 ;    print("ERROR: Check hs")
 ;  end if
@@ -104,7 +104,7 @@ resd@lbLabelBarOn        = False            ; turn off individual cb's
 ;********************************************************************************
 
 
-STRarr = (/ "STRint","STRloc"/)
+STRarr = (/ "STRloc","STRint"/)
 sel = (/"max","min"/)
 do istr = 0,1
   STR = STRarr(istr)
@@ -120,7 +120,8 @@ do istr = 0,1
           rlon = (/ 30,90/)
           rlat = (/ -40,-20/)
           reg = abs(rlon(0))+"_"+abs(rlon(1))+"E."+abs(rlat(1))+"_"+abs(rlat(0))+"S"
-          regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
+          ; regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
+          regtitle = "IND"
         end if
 
       if (ireg .eq. 2)then
@@ -142,7 +143,7 @@ do istr = 0,1
           rlat = (/ -40,-20/)
           reg = abs(rlon(0))+"_"+abs(rlon(1))+"E."+abs(rlat(1))+"_"+abs(rlat(0))+"S"
           ; regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
-          regtitle = "WPac"
+          regtitle = "EPAC"
         end if
 
       if (ireg .eq. 5)then
@@ -150,7 +151,7 @@ do istr = 0,1
           rlat = (/ -40,-20/)
           reg = abs(rlon(0))+"_"+abs(rlon(1))+"E."+abs(rlat(1))+"_"+abs(rlat(0))+"S"
           ; regtitle = abs(rlon(0))+"_"+abs(rlon(1))+"E."
-          regtitle = "Atl"
+          regtitle = "ATL"
         end if
 
 
@@ -432,7 +433,8 @@ resP@gsnPanelXWhiteSpacePercent = 2
 resP@gsnPanelYWhiteSpacePercent = 3
 
 
-selplot = (/plot(0,0,0,2),plot(1,0,0,2),plot(0,4,0,2)  , plot(1,4,0,2),plot(0,5,0,2)  , plot(1,5,0,2)/)
+; selplot = (/plot(0,0,0,2),plot(1,0,0,2),plot(0,4,0,2)  , plot(1,4,0,2),plot(0,5,0,2)  , plot(1,5,0,2)/)
+selplot = (/plot(0,0,0,2),plot(1,0,0,2),plot(0,1,0,2)  , plot(1,1,0,2),plot(0,4,0,2)  , plot(1,4,0,2)/)
 gsn_panel(wks,selplot,(/3,2/),resP)               ; now draw as one plot
 
 delete(plot)

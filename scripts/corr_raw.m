@@ -30,6 +30,8 @@ for issn = 1:5
         cc_STRloc_SAM(isec,issn) = cc(1,2);
         cc = corrcoef(STRint(isec,issn,:),SAMssn(isec,issn,:));
         cc_STRint_SAM(isec,issn) = cc(1,2);
+        cc = corrcoef(frN(isec,issn,:),SAMssn(isec,issn,:));
+        cc_frN_SAM(isec,issn) = cc(1,2);
         if isec == 1
             cc = corrcoef(STRloc(isec,issn,:),SHssn(:,issn));
             cc_STRloc_SH(isec,issn) = cc(1,2);
@@ -100,9 +102,10 @@ for isec = 1:nsec
     xleft = .8:4.8;
     xcent = 1:5;
     xright = 1.2:5.2;
-    c1 = plot(xleft,cc_STRloc_frN(isec,:),'ko');
+    c1 = plot(xleft,cc_STRloc_frN(isec,:),'bo');
     title(charsec(isec));
     xlim([0.5 5.5]);
+
 %     if isec == 1 
 %         ylim([-1 1]);
 %         line(get(gca, 'xlim'),[0 0], 'Color','black','LineWidth',0.0005);
@@ -111,7 +114,8 @@ for isec = 1:nsec
  %   end
     %set(gca,'XTick',[1.5:4.5])
     set(gca,'xgrid','off')
-    
+    set(gca,'ygrid','on')
+   
     set(gca,'XTick',[1:5])
     set(gca,'XTickLabel',ssn)
     set(gca,'ticklength',[0 0])
@@ -121,14 +125,14 @@ for isec = 1:nsec
 
     
     hold on;
-    p1 = plot(xleft,pc_STRloc_frN_mslp65(isec,:),'kx');
+    p1 = plot(xleft,pc_STRloc_frN_mslp65(isec,:),'bx');
     hold on;
-    c2 = plot(xright,-cc_STRint_frN(isec,:),'mo');
+    c2 = plot(xright,-cc_STRint_frN(isec,:),'ro');
     hold on;
-    p2 = plot(xright,-pc_STRint_frN_mslp65(isec,:),'mx')
-    c3 = plot(xleft,-cc_STRloc_SAM(isec,:),'kd');
-    c4 = plot(xright,cc_STRint_SAM(isec,:),'md');
-    c5 = plot(xcent,-cc_frN_SAM(isec,:),'b*');
+    p2 = plot(xright,-pc_STRint_frN_mslp65(isec,:),'rx')
+    c3 = plot(xleft,-cc_STRloc_SAM(isec,:),'bd');
+    c4 = plot(xright,cc_STRint_SAM(isec,:),'rd');
+    c5 = plot(xcent,-cc_frN_SAM(isec,:),'k*');
     
     if isec ==1
         lcolor =  [0.8500    0.3250    0.0980];
@@ -137,9 +141,9 @@ for isec = 1:nsec
         l2 = plot(xleft-0.1,cc_STRloc_LH,'p','Color',lcolor);
         l3 = plot(xleft-0.1,cc_STRloc_PE,'^','Color',lcolor);
 
-        i1 = plot(xright+0.1,-cc_STRint_SH,'r+');
-        i2 = plot(xright+0.1,-cc_STRint_LH,'rp');
-        i3 = plot(xright+0.1,-cc_STRint_PE,'r^');
+        i1 = plot(xright+0.1,-cc_STRint_SH,'m+');
+        i2 = plot(xright+0.1,-cc_STRint_LH,'mp');
+        i3 = plot(xright+0.1,-cc_STRint_PE,'m^');
 
         f1 = plot(xcent,cc_frN_SH,'g+');
         f2 = plot(xcent,cc_frN_LH,'gp');
@@ -174,19 +178,19 @@ for isec = 1:nsec
     
     
     if isec == 5
-        lgd = legend([c1 p1 c3],{' STRloc / frN',' STRloc / frN / mslp65','-STRint / SAM'}) ;
+        lgd = legend([c1 p1 c3],{'STRloc / frN','STRloc / frN / mslp65','STRloc / (-1)SAM'}) ;
         lgd.Location = 'southwest';
         %legend('boxoff')
     end
     if isec == 6
         ah1 = gca;
-        lgd = legend(ah1,[c2 p2 c4],{'-STRint / frN','-STRint / frN / mslp65',' STRint / SAM'}) ;
+        lgd = legend(ah1,[c2 p2 c4],{'(-1)STRint / frN','(-1)STRint / frN / mslp65',' STRint / SAM'}) ;
         lgd.Location = 'southeast';
         %legend('boxoff')
 
         ah2=axes('position',get(gca,'position'), 'visible','off');
         % Legend at axes 2
-        lgd = legend(ah2,[c5],{'-frN / SAM'}) ;
+        lgd = legend(ah2,[c5],{'frN / (-1)SAM'}) ;
         lgd.Location = 'southwest';
 
     end

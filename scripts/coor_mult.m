@@ -11,6 +11,8 @@ yr2 = 2015;
 yrs = (yr1:yr2);
 nyrs = length(yrs);
 
+nsec = 6;
+
 
 cc_mult = zeros(6,5);
 for isec = 1:nsec
@@ -114,7 +116,7 @@ for issn = 1:nssn
     xlim([0.5 6.5]);
     set(gca,'XTick',[1:6])
     set(gca,'XTickLabel',charsec)
-    set(gca,'ticklength',[0 0])
+    set(gca,'ticklength',[0.01 0])
     for iline = 1.5:5.5
         line([iline iline], get(gca, 'ylim'),'Color','black','LineWidth',0.0005);
     end
